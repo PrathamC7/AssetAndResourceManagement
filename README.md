@@ -441,7 +441,7 @@ CREATE TABLE `allocations` (
   `asset_id` BIGINT NOT NULL,
   `assigned_to` BIGINT NOT NULL,
   `allocated_by` BIGINT NOT NULL,
-  `expected_return_date` DATE NOT NULL,
+  `expected_return_date` DATE DEFAULT NULL,
   `actual_return_date` DATETIME DEFAULT NULL,
   `condition_notes` TEXT DEFAULT NULL,
   `is_overdue` BOOLEAN NOT NULL DEFAULT FALSE,
