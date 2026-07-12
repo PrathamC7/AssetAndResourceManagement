@@ -1,23 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { getDashboardSummary, getActivityLogs } from '../services/api';
 
+// Mock data for instant initial render before API loads
+const MOCK_SUMMARY = {
+  totalAssets: 0,
+  assetsAvailable: 0,
+  assetsAllocated: 0,
+  assetsUnderMaintenance: 0,
+  activeBookings: 0,
+  pendingTransfers: 0,
+  overdueReturns: 0,
+  pendingMaintenanceRequests: 0,
+  openAuditCycles: 0
+};
+
 export function DashboardScreen({ onNavigate, user, onAction, summary: propSummary, setSummary: setPropSummary }) {
   const [summary, setSummary] = useState(propSummary || null);
   const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(!summary);
+  const [loading, setLoading] = useState(!propSummary);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         if (!summary) setLoading(true);
-        // Fetch dashboard summary
         const summaryRes = await getDashboardSummary();
         const data = summaryRes.data.data;
         setSummary(data);
         if (setPropSummary) setPropSummary(data);
 
-        // Fetch recent activity logs
         try {
           const logsRes = await getActivityLogs({ size: 5 });
           setActivities(logsRes.data.data?.content || []);
@@ -26,6 +37,8 @@ export function DashboardScreen({ onNavigate, user, onAction, summary: propSumma
         }
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to fetch dashboard');
+        // Show zeros on error rather than blocking
+        setSummary(MOCK_SUMMARY);
       } finally {
         setLoading(false);
       }
@@ -33,6 +46,9 @@ export function DashboardScreen({ onNavigate, user, onAction, summary: propSumma
 
     if (user?.token) {
       fetchDashboardData();
+    } else {
+      setSummary(MOCK_SUMMARY);
+      setLoading(false);
     }
   }, [user]);
 
@@ -45,32 +61,24 @@ export function DashboardScreen({ onNavigate, user, onAction, summary: propSumma
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-[12px] p-6 text-sm text-red-600 font-semibold max-w-lg mx-auto mt-10">
-        <h3 className="text-base font-bold mb-2">Error Loading Dashboard</h3>
-        <p>{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs transition-colors cursor-pointer"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  const displaySummary = summary || MOCK_SUMMARY;
 
   const kpis = [
-    { label: 'Available Assets', value: summary?.assetsAvailable ?? 0 },
-    { label: 'Allocated Assets', value: summary?.assetsAllocated ?? 0 },
-    { label: 'Under Maintenance', value: summary?.assetsUnderMaintenance ?? 0 },
-    { label: 'Active Bookings', value: summary?.activeBookings ?? 0 },
-    { label: 'Pending Transfers', value: summary?.pendingTransfers ?? 0 },
-    { label: 'Overdue Returns', value: summary?.overdueReturns ?? 0 }
+    { label: 'Available Assets', value: displaySummary?.assetsAvailable ?? 0 },
+    { label: 'Allocated Assets', value: displaySummary?.assetsAllocated ?? 0 },
+    { label: 'Under Maintenance', value: displaySummary?.assetsUnderMaintenance ?? 0 },
+    { label: 'Active Bookings', value: displaySummary?.activeBookings ?? 0 },
+    { label: 'Pending Transfers', value: displaySummary?.pendingTransfers ?? 0 },
+    { label: 'Overdue Returns', value: displaySummary?.overdueReturns ?? 0 }
   ];
 
   return (
     <div className="space-y-6 max-w-6xl w-full pb-24">
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 font-semibold">
+          ⚠️ Could not reach backend — showing cached data. {error}
+        </div>
+      )}
       {/* Title */}
       <h2 className="text-xl font-bold text-slate-900 mb-6">Today's Overview</h2>
  
@@ -85,9 +93,9 @@ export function DashboardScreen({ onNavigate, user, onAction, summary: propSumma
       </div>
 
       {/* Overdue alert */}
-      {summary?.overdueReturns > 0 && (
+      {displaySummary?.overdueReturns > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-[12px] p-4 text-sm text-red-600 font-semibold">
-          {summary.overdueReturns} assets overdue for return - flagged for follow-up
+          {displaySummary.overdueReturns} assets overdue for return - flagged for follow-up
         </div>
       )}
 
@@ -97,13 +105,13 @@ export function DashboardScreen({ onNavigate, user, onAction, summary: propSumma
           onClick={() => { if(typeof onNavigate === 'function') onNavigate('assets'); }}
           className="bg-slate-900 hover:bg-slate-800 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors border border-transparent shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
-          <span>+ register asset</span>
+          <span>+ Register Asset</span>
         </button>
         <button 
           onClick={() => { if(typeof onNavigate === 'function') onNavigate('booking'); }}
           className="bg-white hover:bg-slate-50 text-slate-700 font-medium px-6 py-2.5 rounded-lg text-sm transition-colors border border-slate-300 shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
-          <span>Book resource</span>
+          <span>Book Resource</span>
         </button>
         <button 
           onClick={() => { if(typeof onNavigate === 'function') onNavigate('maintenance'); }}

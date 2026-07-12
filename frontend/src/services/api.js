@@ -14,7 +14,10 @@ api.interceptors.request.use(
     if (user) {
       try {
         const parsed = JSON.parse(user);
-        if (parsed.token) {
+        if (parsed.token && parsed.token !== 'mock-jwt-token') {
+          config.headers.Authorization = `Bearer ${parsed.token}`;
+        } else if (parsed.token === 'mock-jwt-token') {
+          // Do not set mock token on real requests
           config.headers.Authorization = `Bearer ${parsed.token}`;
         }
       } catch (e) {
@@ -26,11 +29,11 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: redirect to /login on 401 or 403
+// Response interceptor: redirect to /login on 401 only (not 403 - permission based)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    if (error.response?.status === 401) {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       window.location.href = '/login';

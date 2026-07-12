@@ -1,968 +1,310 @@
-# AssetFlow - Enterprise Asset & Resource Management System
+# AssetFlow — Enterprise Asset & Resource Management System
 
-AssetFlow is an enterprise-grade ERP platform that digitizes and simplifies how organizations register, track, allocate, and maintain their physical assets and shared resources throughout their entire lifecycle.
+<div align="center">
+
+![AssetFlow](frontend/public/logo_horizontal.png)
+
+**A full-stack ERP platform for digitizing end-to-end asset and resource lifecycle management.**
+
+[![Java](https://img.shields.io/badge/Java-17+-orange?logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-purple?logo=vite)](https://vitejs.dev/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.x-blue?logo=mysql)](https://www.mysql.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+
+</div>
 
 ---
 
-## 🚀 Hackathon Quick Start
+## 🚀 Quick Start
 
-### 📋 Prerequisites
-- **Java JDK 17** or higher (configured in your environment PATH)
-- **Node.js v18** or higher + **npm**
-- **MySQL 8.x** running locally (or use the pre-configured remote Railway MySQL cloud database out-of-the-box!)
+### Prerequisites
 
-### ⚙️ Local Setup Instructions
+| Tool | Version | Notes |
+|:---|:---|:---|
+| **Java JDK** | 17 or higher | Required to run the Spring Boot backend |
+| **Maven** | 3.8+ | Bundled as `./mvnw` wrapper — no install needed |
+| **Node.js** | 18 or higher | Required for the React frontend |
+| **npm** | 9 or higher | Comes with Node.js |
+| **MySQL** | 8.x | OR use the pre-configured cloud database (no setup needed!) |
 
-#### Step 1: Run Backend REST API Server
+---
+
+## 🗄️ Database Setup
+
+### Option A — Use the Pre-configured Cloud Database (Recommended)
+> ✅ **Zero setup.** The project ships with a Railway MySQL cloud database pre-configured. Just run the backend and it connects automatically.
+
+The connection details are already set in `Backend/project/src/main/resources/application.properties`. No changes needed.
+
+### Option B — Use a Local MySQL Database
+
+1. Create a database in your local MySQL server:
+```sql
+CREATE DATABASE assetflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+2. Update `Backend/project/src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/assetflow_db
+spring.datasource.username=YOUR_MYSQL_USERNAME
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+```
+
+3. The schema will be created automatically when the Spring Boot app first boots (`spring.jpa.hibernate.ddl-auto=update`).
+
+---
+
+## ⚙️ Running the Application
+
+### Step 1 — Start the Backend API Server
+
 ```bash
 cd Backend/project
 ./mvnw spring-boot:run
 ```
-The server will boot on **`http://localhost:8081`**. The Swagger OpenAPI Documentation will be active at **`http://localhost:8081/swagger-ui/index.html`**.
 
-#### Step 2: Run React Frontend Dev Server
+> ✅ Server starts at **`http://localhost:8081`**
+> 
+> 📖 Swagger UI (API Docs) available at: **`http://localhost:8081/swagger-ui/index.html`**
+
+The backend will:
+- Connect to the MySQL database
+- Auto-create all tables (if they don't exist)
+- Seed demo users and sample data on first boot
+- Expose a secure JWT-authenticated REST API at `/api/v1/`
+
+---
+
+### Step 2 — Start the Frontend Dev Server
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open **`http://localhost:5173`** in your browser. The Vite local proxy handles CORS and routes `/api` to the backend on `8081`.
+
+> ✅ App opens at **`http://localhost:5173`**
+
+The Vite development server includes a proxy that routes all `/api` requests to the backend at port `8081`, eliminating any CORS issues.
 
 ---
 
-## 🔑 Hackathon Demo Credentials
-Use these pre-seeded accounts to log in and test specific role permissions and approval workflows:
+## 🔑 Demo Login Credentials
 
-| Role | Email | Password | Allowed Workflows |
-| :--- | :--- | :--- | :--- |
-| **ADMIN** | `admin@assetflow.com` | `admin123` | Full org setup, promote roles, deactivations, approvals, audits |
-| **ASSET MANAGER** | `manager@assetflow.com` | `manager123` | Registrations, direct allocations, returns check-in, repair actions |
-| **DEPARTMENT HEAD** | `head@assetflow.com` | `head123` | Department transfer reviews, request repairs |
-| **EMPLOYEE** | `employee@assetflow.com` | `employee123` | Shared booking calendar, personal request feeds, unread alerts |
+Use these pre-seeded accounts to explore each permission level:
 
----
-
-## 🎨 Interactive Workflows & Architecture
-
-### User Access Controls (Mermaid.js)
-```mermaid
-graph TD
-    A[Admin] -->|Full Control| B(Organization Setup)
-    A -->|Manage Roles| C(Employee Directory)
-    D[Asset Manager] -->|Register / Track| E(Asset Registry)
-    D -->|Allocate / Return| F(Active Allocations)
-    D -->|Technician Assignments| G(Maintenance Kanban)
-    H[Department Head] -->|Department Reviews| I(Transfer Approvals)
-    J[Employee] -->|Reserve Spaces/Items| K(Resource Booking)
-    J -->|File Tickets| L(Raise Repair Requests)
-```
-
-### Asset Lifecycle Transitions
-```mermaid
-stateDiagram-v2
-    [*] --> AVAILABLE : Registration
-    AVAILABLE --> ALLOCATED : Direct Allocation
-    AVAILABLE --> RESERVED : Resource Booking
-    AVAILABLE --> UNDER_MAINTENANCE : Raise Repair
-    ALLOCATED --> AVAILABLE : Return Check-in
-    ALLOCATED --> ALLOCATED : Transfer Approved
-    RESERVED --> AVAILABLE : Release / Cancel
-    UNDER_MAINTENANCE --> AVAILABLE : Issue Resolved
-    AVAILABLE --> LOST : Missing in Audit
-    LOST --> [*] : Disposed / Retired
-```
+| Role | Email | Password | Access Level |
+|:---|:---|:---|:---|
+| **ADMIN** | `admin@assetflow.com` | `admin123` | Full system control — org setup, role management, audit cycles |
+| **ASSET MANAGER** | `manager@assetflow.com` | `manager123` | Asset registration, direct allocation, maintenance approvals |
+| **DEPARTMENT HEAD** | `head@assetflow.com` | `head123` | Transfer request reviews, department oversight |
+| **EMPLOYEE** | `employee@assetflow.com` | `employee123` | Shared resource booking, personal notifications |
 
 ---
 
-# Design Document: AssetFlow
-
-## Overview
-
-AssetFlow is an enterprise asset and resource management system designed for rapid delivery in an 8-hour solo hackathon window. The architecture prioritizes a complete MySQL schema foundation covering all 10 modules, with a Spring Boot REST API layer and React + Material UI frontend. The design focuses on simplicity, clear separation of concerns, and practical implementation order.
-
-## Architecture
-
-### High-Level Architecture Diagram
+## 🏗️ Project Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend (React SPA)                   │
-│  React 18 + TypeScript + Material UI + React Router v6       │
-│  Axios (HTTP client) + JWT in localStorage                   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ HTTPS / JSON
-                          │ Authorization: Bearer <JWT>
-┌─────────────────────────▼───────────────────────────────────┐
-│                   Backend (Spring Boot 3.x)                   │
-│  Spring Security + JWT Filter → Controllers → Services → JPA │
-│  /api/v1/*                                                   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ JDBC (HikariCP)
-┌─────────────────────────▼───────────────────────────────────┐
-│                      MySQL 8.x (InnoDB)                       │
-│  14 tables, utf8mb4, foreign keys, indexes                   │
-└─────────────────────────────────────────────────────────────┘
+AssetAndResourceManagement/
+├── Backend/
+│   └── project/
+│       ├── src/main/java/com/application/project/
+│       │   ├── controller/        # REST API Controllers (one per domain)
+│       │   ├── service/           # Business logic layer
+│       │   ├── repository/        # Spring Data JPA repositories
+│       │   ├── entity/            # JPA entity models
+│       │   ├── dto/               # Request/Response DTOs
+│       │   ├── security/          # JWT authentication filter & config
+│       │   └── config/            # Spring Security & app configuration
+│       └── src/main/resources/
+│           └── application.properties  # DB + JWT config
+│
+└── frontend/
+    ├── public/
+    │   └── logo_horizontal.png    # App logo
+    ├── src/
+    │   ├── components/            # One file per module screen
+    │   │   ├── LoginScreen.jsx
+    │   │   ├── DashboardScreen.jsx
+    │   │   ├── OrgSetupScreen.jsx
+    │   │   ├── AssetsScreen.jsx
+    │   │   ├── AllocationScreen.jsx
+    │   │   ├── BookingScreen.jsx
+    │   │   ├── MaintenanceScreen.jsx
+    │   │   ├── AuditScreen.jsx
+    │   │   ├── ReportsScreen.jsx
+    │   │   └── ActivityLogsScreen.jsx
+    │   ├── services/
+    │   │   └── api.js             # Centralized Axios API client
+    │   ├── App.jsx                # Router, layout & global state
+    │   └── main.jsx
+    ├── vite.config.js             # Dev proxy config (5173 → 8081)
+    └── package.json
 ```
 
-### Component Diagram
+---
+
+## 🌐 API Overview
+
+Base URL: `http://localhost:8081/api/v1`
+
+All protected endpoints require: `Authorization: Bearer <JWT_TOKEN>`
+
+| Domain | Endpoints |
+|:---|:---|
+| **Auth** | `POST /auth/login`, `POST /auth/signup` |
+| **Dashboard** | `GET /dashboard/summary` |
+| **Assets** | `GET/POST /assets`, `GET /assets/{id}/history` |
+| **Allocations** | `GET/POST /allocations`, `POST /allocations/{id}/return` |
+| **Transfers** | `GET/POST /transfers`, `PATCH /transfers/{id}/approve`, `/reject` |
+| **Bookings** | `GET/POST /bookings`, `PATCH /bookings/{id}/cancel` |
+| **Maintenance** | `GET/POST /maintenance-requests`, `PATCH /…/approve`, `/reject`, `/start`, `/resolve`, `/assign` |
+| **Audit Cycles** | `GET/POST /audit-cycles`, `PATCH /audit-cycles/{id}/close`, `POST /{id}/assignments` |
+| **Departments** | `GET/POST /departments`, `PATCH /departments/{id}/deactivate` |
+| **Categories** | `GET/POST /categories` |
+| **Users** | `GET /users`, `PATCH /users/{id}/role` |
+| **Notifications** | `GET /notifications`, `PATCH /notifications/{id}/read` |
+| **Activity Logs** | `GET /activity-logs` |
+
+---
+
+## 📱 Module Walkthroughs
+
+### 1. Login / Signup
+- JWT-based authentication with role-based session management
+- Automatic redirect to dashboard after login
+- Signup creates standard employee accounts; Admins promote roles
+
+### 2. Dashboard
+- Live KPI cards: Available, Allocated, Under Maintenance, Active Bookings, Pending Transfers, Overdue Returns
+- Overdue return alert banner
+- Recent activity feed from system logs
+
+### 3. Organization Setup *(Admin Only)*
+- **Departments Tab**: Create hierarchy with parent department & department head assignment. Deactivate departments.
+- **Categories Tab**: Manage asset category taxonomy
+- **Employee Directory Tab**: View all users, promote/change roles
+
+### 4. Asset Registry
+- Register new assets with auto-generated Asset Tag (`AF-0001`, etc.)
+- Full-text search, filter by category & lifecycle status
+- Click any asset to view its complete lifecycle event timeline
+
+### 5. Allocation & Transfer
+- Direct allocation of AVAILABLE assets to employees with return date
+- If asset is ALLOCATED → auto-converts to Transfer Request form
+- Transfer approval/rejection workflow for managers & heads
+- Return check-in modal to restore asset to AVAILABLE
+
+### 6. Resource Booking
+- Calendar-style booking for assets marked `isBookable: true`
+- Overlap prevention enforced on backend (HTTP 409)
+- Cancel active bookings to free up slots
+
+### 7. Maintenance Kanban
+- Kanban board with columns: Pending → Approved → Technician Assigned → In Progress → Resolved
+- Approve/Reject tickets (Admin/Asset Manager)
+- Assign technicians from employee directory
+- Resolve with notes — auto-returns asset to AVAILABLE
+
+### 8. Audit
+- Create named audit cycles with date ranges
+- Assign specific assets to auditors in a checklist
+- Record findings: Verified / Missing / Damaged
+- Close cycle to lock results and auto-update asset states
+
+### 9. Reports & Analytics
+- Live inventory ratio bar charts (Allocated / Available / Under Maintenance)
+- Idle assets list and maintenance assets list
+- Export analytics report trigger
+
+### 10. Notifications
+- Real-time notifications from all system events
+- Filter: All / Unread / Alerts / Approvals / Bookings
+- Mark individual notifications as read
+
+---
+
+## 🔐 Security
+
+- **JWT Authentication**: `HS384` signed tokens with 24-hour expiry
+- **Role-Based Access Control**: `ADMIN`, `ASSET_MANAGER`, `DEPARTMENT_HEAD`, `EMPLOYEE`
+- **Spring Security**: Stateless filter chain with CORS configured
+- **Password Hashing**: BCrypt (strength 10)
+- **Token Storage**: Browser `localStorage` with automatic header injection via Axios interceptor
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+| Technology | Version | Purpose |
+|:---|:---|:---|
+| Java | 17 | Core language |
+| Spring Boot | 3.x | Application framework |
+| Spring Security | 6.x | Authentication & authorization |
+| Spring Data JPA | 3.x | ORM / database layer |
+| Hibernate | 6.x | JPA implementation |
+| MySQL Connector | 8.x | Database driver |
+| JWT (jjwt) | 0.12.x | Token generation & validation |
+| Lombok | 1.18 | Boilerplate reduction |
+| SpringDoc OpenAPI | 2.x | Swagger UI generation |
+| Maven | 3.8+ | Build & dependency management |
+
+### Frontend
+| Technology | Version | Purpose |
+|:---|:---|:---|
+| React | 18 | UI framework |
+| Vite | 7 | Build tool & dev server |
+| React Router | 6 | Client-side routing |
+| Axios | 1.x | HTTP client |
+| TailwindCSS | 3.x | Utility-first CSS |
+| Material Symbols | — | Google icon font |
+
+---
+
+## 🗺️ Asset Lifecycle State Machine
 
 ```
-Frontend Modules:
-├── Auth (Login, Signup, JWT management)
-├── Dashboard (KPI cards, quick actions)
-├── Organization Setup (Departments, Categories, Employee Directory)
-├── Asset Management (Registration, Directory, Detail, Lifecycle)
-├── Allocation & Transfer (Allocate, Return, Transfer workflow)
-├── Resource Booking (Calendar view, booking form)
-├── Maintenance (Request form, status tracking)
-└── Shared (Layout, Sidebar, ProtectedRoute, API client)
-
-Backend Modules:
-├── config/ (SecurityConfig, JwtFilter, CorsConfig)
-├── controller/ (AuthController, DashboardController, DepartmentController,
-│                CategoryController, UserController, AssetController,
-│                AllocationController, TransferController, BookingController,
-│                MaintenanceController)
-├── service/ (business logic for each domain)
-├── repository/ (JPA repositories)
-├── model/ (JPA entities)
-├── dto/ (request/response DTOs)
-├── enums/ (Role, LifecycleState, BookingStatus, etc.)
-└── exception/ (GlobalExceptionHandler, custom exceptions)
+                  ┌─────────────┐
+                  │  AVAILABLE  │◄──────────────────────────┐
+                  └──────┬──────┘                           │
+                         │                                   │
+          ┌──────────────┼──────────────┐                   │
+          ▼              ▼              ▼                    │
+     ┌─────────┐  ┌──────────┐  ┌──────────────────┐       │
+     │ALLOCATED│  │ RESERVED │  │UNDER_MAINTENANCE  │       │
+     └────┬────┘  └────┬─────┘  └────────┬─────────┘       │
+          │            │                  │                   │
+          │ Return      │ Release          │ Resolve          │
+          └────────────┴──────────────────┴──────────────────┘
+          │
+          ▼ (Audit: Missing)
+       ┌──────┐
+       │ LOST │──► DISPOSED
+       └──────┘
 ```
 
-## Components and Interfaces
-
-### Data Flow Diagrams
-
-#### Authentication Flow
-
-```
-User → [Signup/Login Form] → POST /api/v1/auth/signup or /login
-  → AuthController → AuthService → UserRepository → MySQL
-  ← JWT token (contains userId, email, role)
-  → Frontend stores JWT in localStorage
-  → All subsequent requests include: Authorization: Bearer <token>
-  → JwtAuthFilter validates token on every request
-```
-
-#### Asset Allocation Flow
-
-```
-Asset_Manager → [Allocation Form] → POST /api/v1/allocations
-  → AllocationController → AllocationService
-    → Validates asset is Available
-    → Validates return date is future
-    → Creates Allocation record
-    → Updates Asset lifecycle_state → Allocated
-    → Creates AssetHistory entry
-  ← 201 Created { allocation data }
-```
-
-#### Resource Booking Flow
-
-```
-User → [Booking Form] → POST /api/v1/bookings
-  → BookingController → BookingService
-    → Validates asset is bookable
-    → Checks for time overlap with existing bookings
-    → Creates ResourceBooking record (status: Upcoming)
-  ← 201 Created { booking data }
-```
-
-#### Maintenance Request Flow
-
-```
-User → [Maintenance Form] → POST /api/v1/maintenance-requests
-  → MaintenanceController → MaintenanceService
-    → Creates MaintenanceRequest (status: Pending)
-  ← 201 Created
-
-Asset_Manager → PATCH /api/v1/maintenance-requests/{id}/approve
-  → Updates request status → Approved
-  → Updates asset lifecycle_state → Under Maintenance
-  → Creates AssetHistory entry
-
-Resolution → PATCH /api/v1/maintenance-requests/{id}/resolve
-  → Updates status → Resolved
-  → Updates asset lifecycle_state → Available
-  → Creates AssetHistory entry
-```
-
-### Authentication & Security
-
-#### JWT Token Structure
-
-```json
-{
-  "sub": "user@example.com",
-  "userId": 1,
-  "role": "ADMIN",
-  "iat": 1720000000,
-  "exp": 1720086400
-}
-```
-
-#### JwtAuthFilter (Spring Security)
-
-```java
-@Component
-public class JwtAuthFilter extends OncePerRequestFilter {
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response, FilterChain chain) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtUtil.parseToken(token);
-            UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(
-                    claims.getSubject(), null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + claims.get("role"))));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-        }
-        chain.doFilter(request, response);
-    }
-}
-```
-
-#### Role Hierarchy
-
-```
-Admin > Asset_Manager > Department_Head > Employee
-```
-
-Each role inherits all permissions of lower roles. Enforced via `@PreAuthorize`:
-
-```java
-@PreAuthorize("hasAnyRole('ADMIN', 'ASSET_MANAGER')")
-@PostMapping("/api/v1/assets")
-public ResponseEntity<ApiResponse<AssetResponse>> registerAsset(...) { }
-```
-
-### API Response Envelope
-
-All REST endpoints return a consistent envelope:
-
-```java
-public class ApiResponse<T> {
-    private boolean success;
-    private String message;
-    private T data;
-    private LocalDateTime timestamp;
-
-    public static <T> ApiResponse<T> success(T data, String message) {
-        return new ApiResponse<>(true, message, data, LocalDateTime.now());
-    }
-
-    public static <T> ApiResponse<T> error(String message) {
-        return new ApiResponse<>(false, message, null, LocalDateTime.now());
-    }
-}
-```
-
-Paginated responses use:
-
-```java
-public class PagedResponse<T> {
-    private boolean success;
-    private String message;
-    private List<T> data;
-    private int page;
-    private int size;
-    private long totalElements;
-    private int totalPages;
-    private LocalDateTime timestamp;
-}
-```
-
-## Data Models
-
-### Entity Relationship Diagram
-
-```
-┌──────────┐       ┌─────────────┐       ┌────────────────────┐
-│  users   │1────M│ allocations  │M────1│      assets         │
-│          │       │              │       │                    │
-│          │1────M│  transfers   │M────1│                    │
-│          │       └─────────────┘       │                    │
-│          │                              │                    │
-│          │1────M┌──────────────────┐M──1│                    │
-│          │      │resource_bookings │    │                    │
-│          │      └──────────────────┘    │                    │
-│          │                              │                    │
-│          │1────M┌─────────────────────┐M─1                  │
-│          │      │maintenance_requests │  │                    │
-│          │      └─────────────────────┘  │                    │
-│          │                              │                    │
-│          │1────M┌───────────────┐       │                    │
-│          │      │ asset_history │M────1│                    │
-│          │      └───────────────┘       │                    │
-│          │                              └────────────────────┘
-│          │                                       │1
-│          │1────M┌──────────────────┐             │
-│          │      │ activity_logs    │             M
-│          │      └──────────────────┘    ┌────────────────┐
-│          │                              │asset_categories│
-│          │1────M┌───────────────┐       └────────┬───────┘
-│          │      │ notifications │              1│
-│          │      └───────────────┘               M
-│          │                              ┌────────────────────────┐
-│          │M────1┌─────────────┐         │category_custom_fields  │
-│          │      │ departments │         └────────────────────────┘
-│          │      └──────┬──────┘
-└──────────┘          1│
-                        M (self-referencing: parent_id)
-
-┌──────────────┐       ┌───────────────────┐
-│ audit_cycles │1────M│ audit_assignments │M────1 assets
-└──────────────┘       └───────────────────┘M────1 users
-```
-
-### Relationship Summary
-
-| Relationship | Type | FK Location |
-|---|---|---|
-| users → departments | M:1 | users.department_id |
-| departments → departments (parent) | M:1 (self) | departments.parent_id |
-| departments → users (head) | M:1 | departments.head_id |
-| assets → asset_categories | M:1 | assets.category_id |
-| asset_categories → category_custom_fields | 1:M | category_custom_fields.category_id |
-| allocations → assets | M:1 | allocations.asset_id |
-| allocations → users (assignee) | M:1 | allocations.assigned_to |
-| allocations → users (allocated_by) | M:1 | allocations.allocated_by |
-| transfers → assets | M:1 | transfers.asset_id |
-| transfers → users (from/to/approved_by) | M:1 | transfers.from_user_id, to_user_id, approved_by |
-| resource_bookings → assets | M:1 | resource_bookings.asset_id |
-| resource_bookings → users | M:1 | resource_bookings.booked_by |
-| maintenance_requests → assets | M:1 | maintenance_requests.asset_id |
-| maintenance_requests → users (requester/assignee) | M:1 | maintenance_requests.requested_by, assigned_to |
-| asset_history → assets | M:1 | asset_history.asset_id |
-| asset_history → users | M:1 | asset_history.performed_by |
-| audit_cycles → users (created_by) | M:1 | audit_cycles.created_by |
-| audit_assignments → audit_cycles | M:1 | audit_assignments.cycle_id |
-| audit_assignments → assets | M:1 | audit_assignments.asset_id |
-| audit_assignments → users (auditor) | M:1 | audit_assignments.auditor_id |
-| notifications → users | M:1 | notifications.user_id |
-| activity_logs → users | M:1 | activity_logs.user_id |
-
-### MySQL DDL — Complete Schema
-
-```sql
--- =============================================================
--- AssetFlow Database Schema — MySQL 8.x (InnoDB, utf8mb4)
--- =============================================================
-
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
-
--- -----------------------------------------------------------
--- 1. users
--- -----------------------------------------------------------
-CREATE TABLE `users` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
-  `password_hash` VARCHAR(255) NOT NULL,
-  `role` ENUM('ADMIN','ASSET_MANAGER','DEPARTMENT_HEAD','EMPLOYEE') NOT NULL DEFAULT 'EMPLOYEE',
-  `department_id` BIGINT DEFAULT NULL,
-  `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_users_email` (`email`),
-  INDEX `idx_users_role` (`role`),
-  INDEX `idx_users_department` (`department_id`),
-  INDEX `idx_users_active` (`is_active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 2. departments
--- -----------------------------------------------------------
-CREATE TABLE `departments` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NOT NULL,
-  `parent_id` BIGINT DEFAULT NULL,
-  `head_id` BIGINT DEFAULT NULL,
-  `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_departments_name` (`name`),
-  INDEX `idx_departments_parent` (`parent_id`),
-  INDEX `idx_departments_head` (`head_id`),
-  INDEX `idx_departments_active` (`is_active`),
-  CONSTRAINT `fk_departments_parent` FOREIGN KEY (`parent_id`)
-    REFERENCES `departments`(`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_departments_head` FOREIGN KEY (`head_id`)
-    REFERENCES `users`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Add FK from users to departments (deferred due to circular reference)
-ALTER TABLE `users`
-  ADD CONSTRAINT `fk_users_department` FOREIGN KEY (`department_id`)
-    REFERENCES `departments`(`id`) ON DELETE SET NULL;
-```
-
-```sql
--- -----------------------------------------------------------
--- 3. asset_categories
--- -----------------------------------------------------------
-CREATE TABLE `asset_categories` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NOT NULL,
-  `description` TEXT DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_categories_name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 4. category_custom_fields
--- -----------------------------------------------------------
-CREATE TABLE `category_custom_fields` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `category_id` BIGINT NOT NULL,
-  `field_name` VARCHAR(100) NOT NULL,
-  `field_type` ENUM('TEXT','NUMBER','DATE','BOOLEAN','SELECT') NOT NULL,
-  `is_required` BOOLEAN NOT NULL DEFAULT FALSE,
-  `options` JSON DEFAULT NULL,
-  `display_order` INT NOT NULL DEFAULT 0,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_custom_fields_category_name` (`category_id`, `field_name`),
-  INDEX `idx_custom_fields_category` (`category_id`),
-  CONSTRAINT `fk_custom_fields_category` FOREIGN KEY (`category_id`)
-    REFERENCES `asset_categories`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 5. assets
--- -----------------------------------------------------------
-CREATE TABLE `assets` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_tag` VARCHAR(10) NOT NULL,
-  `name` VARCHAR(200) NOT NULL,
-  `category_id` BIGINT NOT NULL,
-  `serial_number` VARCHAR(100) NOT NULL,
-  `acquisition_date` DATE NOT NULL,
-  `cost` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-  `condition_status` VARCHAR(50) NOT NULL DEFAULT 'Good',
-  `location` VARCHAR(200) DEFAULT NULL,
-  `photo_url` VARCHAR(500) DEFAULT NULL,
-  `is_bookable` BOOLEAN NOT NULL DEFAULT FALSE,
-  `lifecycle_state` ENUM('AVAILABLE','ALLOCATED','RESERVED',
-    'UNDER_MAINTENANCE','LOST','RETIRED','DISPOSED') NOT NULL DEFAULT 'AVAILABLE',
-  `custom_fields` JSON DEFAULT NULL,
-  `registered_by` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_assets_tag` (`asset_tag`),
-  UNIQUE KEY `uk_assets_serial` (`serial_number`),
-  INDEX `idx_assets_category` (`category_id`),
-  INDEX `idx_assets_state` (`lifecycle_state`),
-  INDEX `idx_assets_bookable` (`is_bookable`),
-  INDEX `idx_assets_location` (`location`),
-  INDEX `idx_assets_registered_by` (`registered_by`),
-  CONSTRAINT `fk_assets_category` FOREIGN KEY (`category_id`)
-    REFERENCES `asset_categories`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_assets_registered_by` FOREIGN KEY (`registered_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 6. asset_history
--- -----------------------------------------------------------
-CREATE TABLE `asset_history` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_id` BIGINT NOT NULL,
-  `event_type` ENUM('STATE_CHANGE','ALLOCATION','RETURN',
-    'TRANSFER','MAINTENANCE','REGISTRATION') NOT NULL,
-  `previous_state` ENUM('AVAILABLE','ALLOCATED','RESERVED',
-    'UNDER_MAINTENANCE','LOST','RETIRED','DISPOSED') DEFAULT NULL,
-  `new_state` ENUM('AVAILABLE','ALLOCATED','RESERVED',
-    'UNDER_MAINTENANCE','LOST','RETIRED','DISPOSED') DEFAULT NULL,
-  `description` TEXT NOT NULL,
-  `performed_by` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_history_asset` (`asset_id`),
-  INDEX `idx_history_event_type` (`event_type`),
-  INDEX `idx_history_performed_by` (`performed_by`),
-  INDEX `idx_history_created_at` (`created_at` DESC),
-  CONSTRAINT `fk_history_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_history_user` FOREIGN KEY (`performed_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 7. allocations
--- -----------------------------------------------------------
-CREATE TABLE `allocations` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_id` BIGINT NOT NULL,
-  `assigned_to` BIGINT NOT NULL,
-  `allocated_by` BIGINT NOT NULL,
-  `expected_return_date` DATE DEFAULT NULL,
-  `actual_return_date` DATETIME DEFAULT NULL,
-  `condition_notes` TEXT DEFAULT NULL,
-  `is_overdue` BOOLEAN NOT NULL DEFAULT FALSE,
-  `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_allocations_asset` (`asset_id`),
-  INDEX `idx_allocations_assignee` (`assigned_to`),
-  INDEX `idx_allocations_active` (`is_active`),
-  INDEX `idx_allocations_overdue` (`is_overdue`),
-  INDEX `idx_allocations_return_date` (`expected_return_date`),
-  INDEX `idx_allocations_allocated_by` (`allocated_by`),
-  CONSTRAINT `fk_allocations_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_allocations_assignee` FOREIGN KEY (`assigned_to`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_allocations_allocator` FOREIGN KEY (`allocated_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 8. transfers
--- -----------------------------------------------------------
-CREATE TABLE `transfers` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_id` BIGINT NOT NULL,
-  `from_user_id` BIGINT NOT NULL,
-  `to_user_id` BIGINT NOT NULL,
-  `reason` TEXT DEFAULT NULL,
-  `status` ENUM('REQUESTED','APPROVED','REJECTED') NOT NULL DEFAULT 'REQUESTED',
-  `approved_by` BIGINT DEFAULT NULL,
-  `approved_at` DATETIME DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_transfers_asset` (`asset_id`),
-  INDEX `idx_transfers_from` (`from_user_id`),
-  INDEX `idx_transfers_to` (`to_user_id`),
-  INDEX `idx_transfers_status` (`status`),
-  INDEX `idx_transfers_approved_by` (`approved_by`),
-  CONSTRAINT `fk_transfers_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_transfers_from` FOREIGN KEY (`from_user_id`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_transfers_to` FOREIGN KEY (`to_user_id`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_transfers_approved_by` FOREIGN KEY (`approved_by`)
-    REFERENCES `users`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 9. resource_bookings
--- -----------------------------------------------------------
-CREATE TABLE `resource_bookings` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_id` BIGINT NOT NULL,
-  `booked_by` BIGINT NOT NULL,
-  `title` VARCHAR(200) DEFAULT NULL,
-  `start_time` DATETIME NOT NULL,
-  `end_time` DATETIME NOT NULL,
-  `status` ENUM('UPCOMING','ONGOING','COMPLETED','CANCELLED') NOT NULL DEFAULT 'UPCOMING',
-  `notes` TEXT DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_bookings_asset` (`asset_id`),
-  INDEX `idx_bookings_user` (`booked_by`),
-  INDEX `idx_bookings_status` (`status`),
-  INDEX `idx_bookings_time_range` (`asset_id`, `start_time`, `end_time`),
-  INDEX `idx_bookings_start` (`start_time`),
-  INDEX `idx_bookings_end` (`end_time`),
-  CONSTRAINT `fk_bookings_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_bookings_user` FOREIGN KEY (`booked_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_bookings_time` CHECK (`end_time` > `start_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 10. maintenance_requests
--- -----------------------------------------------------------
-CREATE TABLE `maintenance_requests` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `asset_id` BIGINT NOT NULL,
-  `requested_by` BIGINT NOT NULL,
-  `issue_description` TEXT NOT NULL,
-  `priority` ENUM('LOW','MEDIUM','HIGH','CRITICAL') NOT NULL DEFAULT 'MEDIUM',
-  `status` ENUM('PENDING','APPROVED','REJECTED',
-    'TECHNICIAN_ASSIGNED','IN_PROGRESS','RESOLVED') NOT NULL DEFAULT 'PENDING',
-  `photo_url` VARCHAR(500) DEFAULT NULL,
-  `assigned_to` BIGINT DEFAULT NULL,
-  `resolution_notes` TEXT DEFAULT NULL,
-  `resolved_at` DATETIME DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_maintenance_asset` (`asset_id`),
-  INDEX `idx_maintenance_requester` (`requested_by`),
-  INDEX `idx_maintenance_status` (`status`),
-  INDEX `idx_maintenance_priority` (`priority`),
-  INDEX `idx_maintenance_assignee` (`assigned_to`),
-  CONSTRAINT `fk_maintenance_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_maintenance_requester` FOREIGN KEY (`requested_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_maintenance_assignee` FOREIGN KEY (`assigned_to`)
-    REFERENCES `users`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 11. audit_cycles
--- -----------------------------------------------------------
-CREATE TABLE `audit_cycles` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(200) NOT NULL,
-  `description` TEXT DEFAULT NULL,
-  `status` ENUM('OPEN','CLOSED') NOT NULL DEFAULT 'OPEN',
-  `start_date` DATE NOT NULL,
-  `end_date` DATE DEFAULT NULL,
-  `created_by` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_audit_cycles_status` (`status`),
-  INDEX `idx_audit_cycles_created_by` (`created_by`),
-  INDEX `idx_audit_cycles_dates` (`start_date`, `end_date`),
-  CONSTRAINT `fk_audit_cycles_creator` FOREIGN KEY (`created_by`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 12. audit_assignments
--- -----------------------------------------------------------
-CREATE TABLE `audit_assignments` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `cycle_id` BIGINT NOT NULL,
-  `asset_id` BIGINT NOT NULL,
-  `auditor_id` BIGINT NOT NULL,
-  `finding` ENUM('VERIFIED','MISSING','DAMAGED') DEFAULT NULL,
-  `notes` TEXT DEFAULT NULL,
-  `audited_at` DATETIME DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_audit_cycle_asset` (`cycle_id`, `asset_id`),
-  INDEX `idx_audit_assignments_cycle` (`cycle_id`),
-  INDEX `idx_audit_assignments_asset` (`asset_id`),
-  INDEX `idx_audit_assignments_auditor` (`auditor_id`),
-  INDEX `idx_audit_assignments_finding` (`finding`),
-  CONSTRAINT `fk_audit_assignments_cycle` FOREIGN KEY (`cycle_id`)
-    REFERENCES `audit_cycles`(`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_audit_assignments_asset` FOREIGN KEY (`asset_id`)
-    REFERENCES `assets`(`id`) ON DELETE RESTRICT,
-  CONSTRAINT `fk_audit_assignments_auditor` FOREIGN KEY (`auditor_id`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 13. notifications
--- -----------------------------------------------------------
-CREATE TABLE `notifications` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `title` VARCHAR(200) NOT NULL,
-  `message` TEXT NOT NULL,
-  `type` VARCHAR(50) NOT NULL,
-  `reference_type` VARCHAR(50) DEFAULT NULL,
-  `reference_id` BIGINT DEFAULT NULL,
-  `is_read` BOOLEAN NOT NULL DEFAULT FALSE,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_notifications_user` (`user_id`),
-  INDEX `idx_notifications_read` (`user_id`, `is_read`),
-  INDEX `idx_notifications_type` (`type`),
-  INDEX `idx_notifications_created_at` (`created_at` DESC),
-  CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`)
-    REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
-
-```sql
--- -----------------------------------------------------------
--- 14. activity_logs
--- -----------------------------------------------------------
-CREATE TABLE `activity_logs` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `action` VARCHAR(100) NOT NULL,
-  `entity_type` VARCHAR(50) NOT NULL,
-  `entity_id` BIGINT NOT NULL,
-  `details` JSON DEFAULT NULL,
-  `ip_address` VARCHAR(45) DEFAULT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_activity_user` (`user_id`),
-  INDEX `idx_activity_action` (`action`),
-  INDEX `idx_activity_entity` (`entity_type`, `entity_id`),
-  INDEX `idx_activity_created_at` (`created_at` DESC),
-  CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`)
-    REFERENCES `users`(`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-SET FOREIGN_KEY_CHECKS = 1;
-```
-
-### ENUM Reference
-
-| ENUM Name | Values | Used In |
-|---|---|---|
-| Role | ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE | users.role |
-| LifecycleState | AVAILABLE, ALLOCATED, RESERVED, UNDER_MAINTENANCE, LOST, RETIRED, DISPOSED | assets.lifecycle_state, asset_history |
-| BookingStatus | UPCOMING, ONGOING, COMPLETED, CANCELLED | resource_bookings.status |
-| MaintenanceStatus | PENDING, APPROVED, REJECTED, TECHNICIAN_ASSIGNED, IN_PROGRESS, RESOLVED | maintenance_requests.status |
-| TransferStatus | REQUESTED, APPROVED, REJECTED | transfers.status |
-| Priority | LOW, MEDIUM, HIGH, CRITICAL | maintenance_requests.priority |
-| AuditStatus | OPEN, CLOSED | audit_cycles.status |
-| AuditFinding | VERIFIED, MISSING, DAMAGED | audit_assignments.finding |
-| CustomFieldType | TEXT, NUMBER, DATE, BOOLEAN, SELECT | category_custom_fields.field_type |
-| HistoryEventType | STATE_CHANGE, ALLOCATION, RETURN, TRANSFER, MAINTENANCE, REGISTRATION | asset_history.event_type |
-
-### Lifecycle State Transition Matrix
-
-```
-From \ To           | AVAILABLE | ALLOCATED | RESERVED | UNDER_MAINT | LOST | RETIRED | DISPOSED
---------------------|-----------|-----------|----------|-------------|------|---------|----------
-AVAILABLE           |     -     |    ✓      |    ✓     |      ✓      |  ✓   |    ✓    |    ✓
-ALLOCATED           |  ✓ (ret)  |     -     | ✓ (xfr)  |      ✓      |  ✓   |    -    |    -
-RESERVED            |    ✓      |    ✓      |     -    |      -      |  -   |    -    |    -
-UNDER_MAINTENANCE   |    ✓      |     -     |     -    |      -      |  -   |    -    |    -
-LOST                |     -     |     -     |     -    |      -      |  -   |    -    |    -
-RETIRED             |     -     |     -     |     -    |      -      |  -   |    -    |    -
-DISPOSED            |     -     |     -     |     -    |      -      |  -   |    -    |    -
-```
-
-> LOST, RETIRED, and DISPOSED are terminal states with no outgoing transitions.
-
-## Error Handling
-
-### Global Exception Handler
-
-The backend uses a `@RestControllerAdvice` class (`GlobalExceptionHandler`) to catch all exceptions and return a consistent JSON envelope:
-
-```java
-{
-  "data": null,
-  "message": "Human-readable error description",
-  "timestamp": "2026-07-10T14:30:00",
-  "errors": [
-    { "field": "email", "message": "must be a valid email address" }
-  ]
-}
-```
-
-### Error Categories and HTTP Status Mapping
-
-| Exception Type | HTTP Status | When |
-|---|---|---|
-| `ValidationException` | 400 Bad Request | Invalid input fields, malformed data |
-| `AuthenticationException` | 401 Unauthorized | Invalid credentials, expired/malformed JWT |
-| `AccessDeniedException` | 403 Forbidden | Role insufficient for endpoint |
-| `ResourceNotFoundException` | 404 Not Found | Entity ID not found |
-| `ConflictException` | 409 Conflict | Duplicate email/tag, allocation conflict, booking overlap |
-| `InvalidStateTransitionException` | 400 Bad Request | Lifecycle transition not permitted |
-| `MethodArgumentNotValidException` | 400 Bad Request | Bean Validation failures (@Valid) |
-| `OptimisticLockException` | 409 Conflict | Concurrent modification detected |
-| `Exception` (catch-all) | 500 Internal Server Error | Unexpected errors (logged, not exposed) |
-
-### Error Handling Patterns
-
-1. **Input Validation**: Jakarta Bean Validation annotations (`@NotBlank`, `@Email`, `@Size`, `@Future`) on request DTOs. Spring triggers validation before the controller method body executes.
-2. **Business Rule Violations**: Service layer throws domain-specific exceptions with descriptive messages.
-3. **Concurrency Conflicts**: `@Version` optimistic locking on JPA entities for allocation and booking to prevent race conditions.
-4. **Database Constraint Violations**: `DataIntegrityViolationException` is caught and mapped to 409 with a user-friendly message.
-5. **Frontend Error Display**: Axios interceptor routes errors to a global MUI snackbar for non-field errors, or inline field helpers for 400 responses with field-level detail.
-
-## Testing Strategy
-
-### Unit Tests (JUnit 5 + Mockito)
-
-- **Service layer**: Test business logic in isolation with mocked repositories. Focus on lifecycle state transitions, allocation conflict detection, booking overlap checks, role authorization.
-- **Validation**: Test DTO validation annotations with specific valid/invalid examples.
-- **JWT utilities**: Test token generation, parsing, expiry detection, claim extraction.
-- **Frontend components**: React Testing Library for role-based rendering, form validation display, conditional UI.
-
-### Integration Tests (@SpringBootTest + Testcontainers)
-
-- **Repository layer**: Verify JPA mappings, FK constraints, unique constraints, cascade behavior against real MySQL 8.x via Testcontainers.
-- **Controller layer**: MockMvc full request/response cycle including security filters, validation, error handling.
-- **Database migrations**: Verify Flyway migration scripts apply cleanly.
-
-### Property-Based Tests
-
-Property-based tests target core domain logic where input variation reveals edge cases:
-
-- **Lifecycle state machine**: Generate random state transition sequences and verify only valid transitions succeed.
-- **Booking overlap detection**: Generate random time intervals and verify the overlap algorithm is correct.
-- **Asset tag generation**: Generate registration sequences and verify uniqueness + AF-XXXX format.
-- **JWT round-trip**: Encode/decode random user claims and verify all claims are preserved.
-- **Role hierarchy**: For any endpoint, verify higher roles always have access if lower roles do.
-- **Overdue detection**: Generate allocations with various dates and verify overdue marking accuracy.
-
-### End-to-End Tests
-
-- Critical user flows: signup → login → register asset → allocate → return.
-- Manual during hackathon; automated E2E deferred to post-hackathon.
-
-## Correctness Properties
-
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
-
-### Property 1: Signup always creates Employee role
-
-*For any* valid signup request (valid email format, password ≥ 8 chars, unique email), the created user record SHALL have role = EMPLOYEE and the response SHALL contain a valid JWT token with that role encoded.
-
-**Validates: Requirements 1.1**
-
-### Property 2: Invalid credentials always yield 401
-
-*For any* email/password pair where either the email does not exist or the password does not match the stored hash, the login endpoint SHALL return HTTP 401 with no token in the response body.
-
-**Validates: Requirements 2.2, 2.4**
-
-### Property 3: Role hierarchy access control
-
-*For any* protected API endpoint and any two roles where Role A is higher than Role B in the hierarchy (ADMIN > ASSET_MANAGER > DEPARTMENT_HEAD > EMPLOYEE), if Role B is permitted access to the endpoint, then Role A SHALL also be permitted access. Conversely, if Role A is forbidden, then Role B SHALL also be forbidden.
-
-**Validates: Requirements 3.1, 3.2, 3.4**
-
-### Property 4: Uniqueness constraints are enforced
-
-*For any* entity with a uniqueness constraint (user email, department name, category name, asset tag, asset serial number), attempting to create a second record with the same unique field value SHALL be rejected with HTTP 409.
-
-**Validates: Requirements 1.3, 6.4, 7.3, 9.4**
-
-### Property 5: Asset tag format and sequentiality
-
-*For any* newly registered asset, the auto-generated asset_tag SHALL match the regex pattern `^AF-\d{4}$` and SHALL be strictly greater than all previously generated tags when compared numerically.
-
-**Validates: Requirements 9.2**
-
-### Property 6: New assets start as Available
-
-*For any* valid asset registration request, the created asset's lifecycle_state SHALL be AVAILABLE regardless of any other field values in the request.
-
-**Validates: Requirements 9.3**
-
-### Property 7: Lifecycle state transition validity
-
-*For any* asset in a given lifecycle_state and any requested target state, the transition SHALL succeed if and only if the (current_state, target_state) pair is in the valid transition matrix. Invalid transitions SHALL be rejected with HTTP 400.
-
-**Validates: Requirements 11.1, 11.3**
-
-### Property 8: State transitions always produce history entries
-
-*For any* successful lifecycle state transition on an asset, the system SHALL create exactly one new asset_history record with the correct previous_state, new_state, performing user, and timestamp.
-
-**Validates: Requirements 11.2, 23.1**
-
-### Property 9: Allocation conflict prevention
-
-*For any* asset whose lifecycle_state is NOT Available, an allocation request targeting that asset SHALL be rejected with HTTP 409. Only assets in Available state can be allocated.
-
-**Validates: Requirements 12.1, 12.2**
-
-### Property 10: Allocation return round-trip
-
-*For any* asset that is allocated and then returned, the asset's lifecycle_state SHALL return to AVAILABLE, the allocation record SHALL have is_active = false and a non-null actual_return_date, and condition_notes SHALL be persisted exactly as provided.
-
-**Validates: Requirements 13.1, 13.2**
-
-### Property 11: Booking overlap rejection
-
-*For any* two booking requests on the same asset where their time intervals overlap (start1 < end2 AND start2 < end1, excluding the adjacent case where end1 = start2), the second request SHALL be rejected with HTTP 409.
-
-**Validates: Requirements 16.2**
-
-### Property 12: Booking time validity
-
-*For any* booking request, the end_time SHALL be strictly greater than start_time. Requests violating this constraint SHALL be rejected with HTTP 400.
-
-**Validates: Requirements 16.1**
-
-### Property 13: Maintenance approval sets asset to Under Maintenance
-
-*For any* maintenance request that is approved, the referenced asset's lifecycle_state SHALL transition to UNDER_MAINTENANCE. When that same request is resolved, the asset SHALL transition back to AVAILABLE.
-
-**Validates: Requirements 17.2, 17.6**
-
-### Property 14: Transfer approval workflow atomicity
-
-*For any* approved transfer, the system SHALL atomically: (1) set transfer status to APPROVED, (2) close the current allocation (is_active = false), (3) create a new allocation to the requesting user, and (4) maintain the asset lifecycle_state as ALLOCATED.
-
-**Validates: Requirements 14.2**
-
-### Property 15: Overdue detection accuracy
-
-*For any* open allocation (is_active = true) where expected_return_date < current_date, the allocation SHALL be marked as overdue (is_overdue = true). Allocations where expected_return_date >= current_date SHALL NOT be marked overdue.
-
-**Validates: Requirements 15.1**
-
-### Property 16: API response envelope consistency
-
-*For any* API endpoint response (success or error), the JSON body SHALL contain the fields: `data`, `message`, and `timestamp`. The timestamp SHALL be a valid ISO-8601 datetime string.
-
-**Validates: Requirements 21.2**
-
-### Property 17: Pagination correctness
-
-*For any* paginated endpoint called with page=P and size=S, the response SHALL contain at most S items, and the items SHALL correspond to the correct offset (P × S) in the full ordered result set.
-
-**Validates: Requirements 21.4, 10.4**
-
-### Property 18: Custom field definition round-trip
-
-*For any* asset category with custom field definitions (field_name, field_type, is_required), retrieving the category SHALL return the exact same custom field definitions that were stored, preserving order, types, and required flags.
-
-**Validates: Requirements 7.4**
-
-### Property 19: Password hashing security
-
-*For any* stored user record, the password_hash field SHALL be a valid bcrypt hash string (prefix `$2a$` or `$2b$`) with a cost factor ≥ 10, and SHALL NOT equal the plaintext password.
-
-**Validates: Requirements 1.4**
-
-### Property 20: Dashboard scope isolation
-
-*For any* Department_Head user, the dashboard KPI values SHALL only include data from their department. Employee users SHALL only see personal data. Admin and Asset_Manager users SHALL see organization-wide data.
-
-**Validates: Requirements 5.5**
-
-### Property 21: History ordering
-
-*For any* asset history query, the returned entries SHALL be sorted in reverse chronological order (newest created_at first), and pagination SHALL respect this ordering consistently.
-
-**Validates: Requirements 23.3**
+---
+
+## 📊 Entity Relationship Summary
+
+| Entity | Key Relationships |
+|:---|:---|
+| `User` | Belongs to Department, has Role |
+| `Asset` | Belongs to Category, has LifecycleState |
+| `Allocation` | Asset ↔ User (assignee), has return date |
+| `TransferRequest` | Asset, From User, To User, Status |
+| `Booking` | Bookable Asset, User, time range |
+| `MaintenanceRequest` | Asset, Reporter, Technician, Priority |
+| `AuditCycle` | Has many AuditAssignments (Asset + Auditor + Finding) |
+| `Notification` | Belongs to User, has type and isRead flag |
+| `ActivityLog` | Asset history events with state transitions |
+
+---
+
+## 📝 License
+
+This project was built for the **Odoo Hackathon 2026**. All rights reserved.

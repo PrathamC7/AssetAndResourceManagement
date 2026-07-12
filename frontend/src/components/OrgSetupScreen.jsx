@@ -10,21 +10,7 @@ import {
 } from '../services/api';
 
 export function OrgSetupScreen({ onNavigate, user, onAction }) {
-  if (user?.role !== 'ADMIN') {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-[12px] p-6 text-sm text-red-650 font-bold max-w-lg mx-auto mt-10 shadow-sm">
-        <h3 className="text-base font-extrabold mb-2 text-red-800 uppercase tracking-wider">Access Denied</h3>
-        <p className="leading-relaxed">You must be an Administrator to access organizational setup records.</p>
-        <button 
-          onClick={() => { if(typeof onNavigate === 'function') onNavigate('dashboard'); }} 
-          className="mt-4 px-4.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-        >
-          Return to Dashboard
-        </button>
-      </div>
-    );
-  }
-
+  // ALL hooks must be declared before any conditional returns (React Rules of Hooks)
   const [activeTab, setActiveTab] = useState('departments');
   const [departments, setDepartments] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -74,8 +60,26 @@ export function OrgSetupScreen({ onNavigate, user, onAction }) {
   useEffect(() => {
     if (user?.token) {
       fetchData();
+    } else {
+      setLoading(false);
     }
   }, [user, activeTab]);
+
+  // Conditional render AFTER all hooks
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-[12px] p-6 text-sm text-red-650 font-bold max-w-lg mx-auto mt-10 shadow-sm">
+        <h3 className="text-base font-extrabold mb-2 text-red-800 uppercase tracking-wider">Access Denied</h3>
+        <p className="leading-relaxed">You must be an Administrator to access organizational setup records.</p>
+        <button 
+          onClick={() => { if(typeof onNavigate === 'function') onNavigate('dashboard'); }} 
+          className="mt-4 px-4.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  }
 
   const handleAdd = async (e) => {
     e.preventDefault();
