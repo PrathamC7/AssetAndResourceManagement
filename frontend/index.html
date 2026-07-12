@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="color-scheme" content="only light" />
     <title>AssetFlow - Enterprise Asset & Resource Management System</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -17,61 +19,30 @@
             theme: {
                 extend: {
                     "colors": {
-                        "error-container": "#ffdad6",
-                        "on-tertiary-container": "#ffede6",
-                        "surface-container-lowest": "#ffffff",
-                        "on-background": "#191c1e",
-                        "on-secondary-fixed-variant": "#3f465c",
-                        "surface-container-highest": "#e0e3e5",
-                        "surface-tint": "#0053db",
-                        "secondary-fixed-dim": "#bec6e0",
-                        "on-error": "#ffffff",
-                        "error": "#ba1a1a",
-                        "on-secondary-fixed": "#131b2e",
-                        "tertiary-fixed-dim": "#ffb596",
-                        "secondary": "#565e74",
-                        "secondary-container": "#dae2fd",
-                        "surface-dim": "#d8dadc",
-                        "surface-light": "#FFFFFF",
-                        "on-surface-variant": "#434655",
-                        "secondary-fixed": "#dae2fd",
-                        "on-primary-fixed-variant": "#003ea8",
-                        "tertiary": "#943700",
-                        "outline": "#737686",
-                        "info": "#0EA5E9",
+                        primary: "rgba(var(--color-primary), <alpha-value>)",
+                        background: "rgba(var(--color-background), <alpha-value>)",
+                        surface: "rgba(var(--color-surface), <alpha-value>)",
+                        "on-surface": "rgba(var(--color-on-surface), <alpha-value>)",
+                        "on-surface-variant": "rgba(var(--color-on-surface-variant), <alpha-value>)",
+                        "surface-container": "rgba(var(--color-surface-container), <alpha-value>)",
+                        "surface-container-low": "rgba(var(--color-surface-container-low), <alpha-value>)",
+                        "surface-container-lowest": "rgba(var(--color-surface-container-lowest), <alpha-value>)",
+                        "surface-container-highest": "rgba(var(--color-surface-container-highest), <alpha-value>)",
+                        "surface-light": "rgba(var(--color-surface), <alpha-value>)",
+                        "primary-container": "rgba(var(--color-primary-container), <alpha-value>)",
+                        "on-primary-container": "rgba(var(--color-on-primary-container), <alpha-value>)",
+                        "secondary-container": "rgba(var(--color-secondary-container), <alpha-value>)",
+                        "on-secondary-container": "rgba(var(--color-on-secondary-container), <alpha-value>)",
+                        error: "rgba(var(--color-error), <alpha-value>)",
+                        "error-container": "rgba(var(--color-error-container), <alpha-value>)",
+                        success: "rgba(var(--color-success), <alpha-value>)",
+                        warning: "rgba(var(--color-warning), <alpha-value>)",
+                        "deep-navy": "rgba(var(--color-deep-navy), <alpha-value>)",
+                        outline: "rgba(var(--color-on-surface-variant), 0.4)",
+                        "outline-variant": "rgba(var(--color-on-surface-variant), 0.15)",
+                        info: "rgba(var(--color-info), <alpha-value>)",
+                        danger: "rgba(var(--color-error), <alpha-value>)",
                         "stripe-purple": "#635BFF",
-                        "on-tertiary": "#ffffff",
-                        "warning": "#F59E0B",
-                        "on-tertiary-fixed-variant": "#7d2d00",
-                        "surface-container-low": "#f2f4f6",
-                        "surface-container": "#eceef0",
-                        "surface-bright": "#f7f9fb",
-                        "danger": "#DC2626",
-                        "outline-variant": "#c3c6d7",
-                        "surface": "#f7f9fb",
-                        "tertiary-fixed": "#ffdbcd",
-                        "inverse-primary": "#b4c5ff",
-                        "background": "#f7f9fb",
-                        "on-tertiary-fixed": "#360f00",
-                        "on-primary": "#ffffff",
-                        "on-primary-container": "#eeefff",
-                        "primary-fixed-dim": "#b4c5ff",
-                        "primary": "#004ac6",
-                        "on-secondary": "#ffffff",
-                        "primary-fixed": "#dbe1ff",
-                        "success": "#16A34A",
-                        "surface-variant": "#e0e3e5",
-                        "on-surface": "#191c1e",
-                        "tertiary-container": "#bc4800",
-                        "on-secondary-container": "#5c647a",
-                        "on-primary-fixed": "#00174b",
-                        "surface-dark": "#111827",
-                        "primary-container": "#2563eb",
-                        "surface-container-high": "#e6e8ea",
-                        "inverse-surface": "#2d3133",
-                        "deep-navy": "#0A2540",
-                        "inverse-on-surface": "#eff1f3",
-                        "on-error-container": "#93000a"
                     },
                     "borderRadius": {
                         "DEFAULT": "0.25rem",
@@ -81,7 +52,7 @@
                         "full": "9999px"
                     },
                     "spacing": {
-                        "margin-desktop": "48px",
+                        "margin-desktop": "40px",
                         "gutter": "24px",
                         "xl": "64px",
                         "lg": "40px",
@@ -106,9 +77,33 @@
         }
     </script>
     <style>
+        :root {
+            --color-primary: 79, 70, 229; /* indigo-600 */
+            --color-background: 248, 250, 252; /* slate-50 */
+            --color-surface: 255, 255, 255; /* white */
+            --color-on-surface: 15, 23, 42; /* slate-900 */
+            --color-on-surface-variant: 71, 85, 105; /* slate-600 */
+            --color-surface-container: 241, 245, 249; /* slate-100 */
+            --color-surface-container-low: 248, 250, 252;
+            --color-surface-container-lowest: 255, 255, 255;
+            --color-surface-container-highest: 226, 232, 240; /* slate-200 */
+            --color-primary-container: 224, 231, 255; /* indigo-100 */
+            --color-on-primary-container: 55, 48, 163; /* indigo-800 */
+            --color-secondary-container: 241, 245, 249;
+            --color-on-secondary-container: 71, 85, 105;
+            --color-error: 239, 68, 68; /* red-500 */
+            --color-error-container: 254, 226, 226; /* red-100 */
+            --color-success: 16, 185, 129; /* emerald-500 */
+            --color-warning: 245, 158, 11; /* amber-500 */
+            --color-deep-navy: 15, 23, 42; /* slate-900 */
+            --color-info: 14, 165, 233; /* sky-500 */
+        }
+
         body {
+            color-scheme: only light !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
             scroll-behavior: smooth;
         }
         .material-symbols-outlined {
@@ -116,12 +111,12 @@
             vertical-align: middle;
         }
         .glass-nav {
-            background: rgba(247, 249, 251, 0.8);
+            background: rgba(var(--color-surface), 0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
         .sidebar-gradient {
-            background: linear-gradient(180deg, #0A2540 0%, #111827 100%);
+            background: linear-gradient(180deg, rgba(var(--color-deep-navy), 1) 0%, rgba(var(--color-background), 1) 100%);
         }
         .shadow-soft {
             box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
@@ -133,10 +128,10 @@
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--color-surface-container-highest), 0.5); border-radius: 10px; }
     </style>
   </head>
-  <body class="text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+  <body class="bg-white text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

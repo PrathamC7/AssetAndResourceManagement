@@ -1,60 +1,91 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export function LoginScreen({ onNavigate, user, onAction }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (typeof onAction === 'function') {
+      onAction('submit', { email, password });
+    }
+  };
+
   return (
-    <>
-      <div className="flex-1 overflow-y-auto p-margin-desktop custom-scrollbar"><div className="w-full max-w-[480px] space-y-md animate-float">
-{/* Welcome Text */}
-<div className="text-center space-y-xs">
-<h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">Welcome back to AssetFlow</h1>
-<p className="font-body-md text-body-md text-on-surface-variant">Sign in to manage your organization's assets</p>
-</div>
-{/* Auth Card */}
-<div className="glass-card p-lg rounded-[24px] shadow-[0_32px_64px_-12px_rgba(15,23,42,0.12)] border border-white/50">
-<form className="space-y-md" id="loginForm" onSubmit={(e) => { e.preventDefault(); if(typeof onAction === "function") onAction("submit", e); }}>
-{/* Email Input */}
-<div className="space-y-xs">
-<label className="font-label-md text-label-md text-on-surface-variant block ml-1" htmlFor="email">Email Address</label>
-<div className="relative group halo-focus rounded-xl transition-all">
-<div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
-<span className="material-symbols-outlined text-outline" data-icon="mail">mail</span>
-</div>
-<input className="w-full bg-surface-container-low border-none rounded-xl py-3 pl-10 pr-md font-body-md text-body-md placeholder:text-outline-variant transition-colors hover:bg-surface-container" id="email" name="email" placeholder="name@company.com" required={true} type="email"/>
-</div>
-</div>
-{/* Password Input */}
-<div className="space-y-xs">
-<div className="flex justify-between items-center px-1">
-<label className="font-label-md text-label-md text-on-surface-variant" htmlFor="password">Password</label>
-<a className="font-label-md text-label-md text-primary hover:underline" href="#">Forgot password?</a>
-</div>
-<div className="relative group halo-focus rounded-xl transition-all">
-<div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
-<span className="material-symbols-outlined text-outline" data-icon="lock">lock</span>
-</div>
-<input className="w-full bg-surface-container-low border-none rounded-xl py-3 pl-10 pr-12 font-body-md text-body-md placeholder:text-outline-variant transition-colors hover:bg-surface-container" id="password" name="password" placeholder="••••••••" required={true} type="password"/>
-<button className="absolute inset-y-0 right-0 pr-sm flex items-center text-outline hover:text-on-surface transition-colors" onClick={() => { if(typeof onAction === "function") onAction("togglePassword"); }} type="button">
-<span className="material-symbols-outlined" data-icon="visibility" id="passwordIcon">visibility</span>
-</button>
-</div>
-</div>
-{/* Submit Button */}
-<div className="pt-sm space-y-sm">
-<button className="w-full bg-primary-container text-on-primary-container font-button text-button py-3.5 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2" type="submit">
-                                Sign In
-                                <span className="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
-</button>
-<button className="w-full bg-transparent text-on-surface-variant font-button text-button py-3.5 rounded-xl hover:bg-surface-container-high transition-colors" type="button">
-                                Create Account
-                            </button>
-</div>
-</form>
-</div>
-{/* Trust Badges / Social Proof (Subtle) */}
-<div className="flex items-center justify-center gap-md opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
-<span className="text-label-md font-label-md uppercase tracking-widest text-outline">Trusted by Enterprise Leaders</span>
-</div>
-</div></div>
-    </>
+    <div className="w-full max-w-[440px] mx-auto p-6">
+      {/* Login Card */}
+      <div className="bg-white border border-slate-200 p-8 rounded-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.04)] flex flex-col text-slate-800">
+        
+        {/* Title */}
+        <h1 className="text-center font-bold text-2xl text-slate-950 mb-6 pb-2 border-b border-slate-100">
+          AssetFlow – login
+        </h1>
+
+        {/* Logo Icon Badge */}
+        <div className="flex justify-center mb-8">
+          <div className="w-16 h-16 rounded-full border border-slate-300 flex items-center justify-center text-slate-700 text-lg font-bold">
+            AF
+          </div>
+        </div>
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Email input */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700 block" htmlFor="email">
+              Email
+            </label>
+            <input
+              className="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-slate-500 rounded-lg py-2.5 px-3.5 text-sm text-slate-900 placeholder-slate-400 transition-all outline-none"
+              id="email"
+              type="email"
+              placeholder="name@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Password Input */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700 block" htmlFor="password">
+              Password
+            </label>
+            <input
+              className="w-full bg-white border border-slate-300 hover:border-slate-400 focus:border-slate-500 rounded-lg py-2.5 px-3.5 text-sm text-slate-900 placeholder-slate-400 transition-all outline-none"
+              id="password"
+              type="password"
+              placeholder="**********"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <div className="text-right">
+              <a className="text-xs font-medium text-slate-500 hover:underline" href="#">
+                Forgot password
+              </a>
+            </div>
+          </div>
+
+          <hr className="border-slate-200 my-4" />
+
+          {/* New Here info box */}
+          <div className="space-y-3">
+            <div className="text-xs text-slate-500 font-medium">
+              New here?
+            </div>
+            <div className="w-full border border-slate-300 rounded-lg p-3 text-xs text-slate-600 bg-slate-50/50 leading-relaxed">
+              Sign up creates an employee account admin roles assigned later
+            </div>
+
+            <button
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-all text-sm cursor-pointer shadow-sm"
+              type="submit"
+            >
+              Create Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
