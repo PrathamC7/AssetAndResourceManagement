@@ -20,10 +20,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MySQLDialect
 
 # ==============================
@@ -38,7 +38,7 @@ jwt:
 # ==============================
 logging:
   level:
-    root: INFO
-    com.application.project: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
+    root: WARN
+    com.application.project: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

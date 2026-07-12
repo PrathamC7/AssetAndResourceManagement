@@ -1,3 +1,79 @@
+# AssetFlow - Enterprise Asset & Resource Management System
+
+AssetFlow is an enterprise-grade ERP platform that digitizes and simplifies how organizations register, track, allocate, and maintain their physical assets and shared resources throughout their entire lifecycle.
+
+---
+
+## 🚀 Hackathon Quick Start
+
+### 📋 Prerequisites
+- **Java JDK 17** or higher (configured in your environment PATH)
+- **Node.js v18** or higher + **npm**
+- **MySQL 8.x** running locally (or use the pre-configured remote Railway MySQL cloud database out-of-the-box!)
+
+### ⚙️ Local Setup Instructions
+
+#### Step 1: Run Backend REST API Server
+```bash
+cd Backend/project
+./mvnw spring-boot:run
+```
+The server will boot on **`http://localhost:8081`**. The Swagger OpenAPI Documentation will be active at **`http://localhost:8081/swagger-ui/index.html`**.
+
+#### Step 2: Run React Frontend Dev Server
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open **`http://localhost:5173`** in your browser. The Vite local proxy handles CORS and routes `/api` to the backend on `8081`.
+
+---
+
+## 🔑 Hackathon Demo Credentials
+Use these pre-seeded accounts to log in and test specific role permissions and approval workflows:
+
+| Role | Email | Password | Allowed Workflows |
+| :--- | :--- | :--- | :--- |
+| **ADMIN** | `admin@assetflow.com` | `admin123` | Full org setup, promote roles, deactivations, approvals, audits |
+| **ASSET MANAGER** | `manager@assetflow.com` | `manager123` | Registrations, direct allocations, returns check-in, repair actions |
+| **DEPARTMENT HEAD** | `head@assetflow.com` | `head123` | Department transfer reviews, request repairs |
+| **EMPLOYEE** | `employee@assetflow.com` | `employee123` | Shared booking calendar, personal request feeds, unread alerts |
+
+---
+
+## 🎨 Interactive Workflows & Architecture
+
+### User Access Controls (Mermaid.js)
+```mermaid
+graph TD
+    A[Admin] -->|Full Control| B(Organization Setup)
+    A -->|Manage Roles| C(Employee Directory)
+    D[Asset Manager] -->|Register / Track| E(Asset Registry)
+    D -->|Allocate / Return| F(Active Allocations)
+    D -->|Technician Assignments| G(Maintenance Kanban)
+    H[Department Head] -->|Department Reviews| I(Transfer Approvals)
+    J[Employee] -->|Reserve Spaces/Items| K(Resource Booking)
+    J -->|File Tickets| L(Raise Repair Requests)
+```
+
+### Asset Lifecycle Transitions
+```mermaid
+stateDiagram-v2
+    [*] --> AVAILABLE : Registration
+    AVAILABLE --> ALLOCATED : Direct Allocation
+    AVAILABLE --> RESERVED : Resource Booking
+    AVAILABLE --> UNDER_MAINTENANCE : Raise Repair
+    ALLOCATED --> AVAILABLE : Return Check-in
+    ALLOCATED --> ALLOCATED : Transfer Approved
+    RESERVED --> AVAILABLE : Release / Cancel
+    UNDER_MAINTENANCE --> AVAILABLE : Issue Resolved
+    AVAILABLE --> LOST : Missing in Audit
+    LOST --> [*] : Disposed / Retired
+```
+
+---
+
 # Design Document: AssetFlow
 
 ## Overview
