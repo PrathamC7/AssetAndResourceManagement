@@ -228,6 +228,19 @@ function App() {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    
+    // Clear all global caches
+    setCachedSummary(null);
+    setCachedAssets(null);
+    setCachedCategories(null);
+    setCachedDepartments(null);
+    setCachedUsers(null);
+    setCachedAllocations(null);
+    setCachedTransfers(null);
+    setCachedBookings(null);
+    setCachedMaintenance(null);
+    setCachedAuditCycles(null);
+
     navigate('/login');
   };
 
