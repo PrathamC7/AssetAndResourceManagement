@@ -19,6 +19,18 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
   const [notifications, setNotifications] = useState([]);
+
+  // Global cache states for instant load
+  const [cachedSummary, setCachedSummary] = useState(null);
+  const [cachedAssets, setCachedAssets] = useState(null);
+  const [cachedCategories, setCachedCategories] = useState(null);
+  const [cachedDepartments, setCachedDepartments] = useState(null);
+  const [cachedUsers, setCachedUsers] = useState(null);
+  const [cachedAllocations, setCachedAllocations] = useState(null);
+  const [cachedTransfers, setCachedTransfers] = useState(null);
+  const [cachedBookings, setCachedBookings] = useState(null);
+  const [cachedMaintenance, setCachedMaintenance] = useState(null);
+  const [cachedAuditCycles, setCachedAuditCycles] = useState(null);
   
   const navigate = useNavigate();
 
@@ -274,14 +286,14 @@ function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         
         {/* Outlet Pages */}
-        <Route path="dashboard" element={<DashboardScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="org-setup" element={<OrgSetupScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="assets" element={<AssetsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="allocation" element={<AllocationScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="booking" element={<BookingScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="maintenance" element={<MaintenanceScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="audit" element={<AuditScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="reports" element={<ReportsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
+        <Route path="dashboard" element={<DashboardScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} summary={cachedSummary} setSummary={setCachedSummary} />} />
+        <Route path="org-setup" element={<OrgSetupScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} departments={cachedDepartments} setDepartments={setCachedDepartments} categories={cachedCategories} setCategories={setCachedCategories} users={cachedUsers} setUsers={setCachedUsers} />} />
+        <Route path="assets" element={<AssetsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} assets={cachedAssets} setAssets={setCachedAssets} categories={cachedCategories} setCategories={setCachedCategories} />} />
+        <Route path="allocation" element={<AllocationScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} assets={cachedAssets} setAssets={setCachedAssets} employees={cachedUsers} setEmployees={setCachedUsers} allocations={cachedAllocations} setAllocations={setCachedAllocations} transfers={cachedTransfers} setTransfers={setCachedTransfers} />} />
+        <Route path="booking" element={<BookingScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} resources={cachedAssets} setResources={setCachedAssets} bookings={cachedBookings} setBookings={setCachedBookings} />} />
+        <Route path="maintenance" element={<MaintenanceScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} requests={cachedMaintenance} setRequests={setCachedMaintenance} assets={cachedAssets} setAssets={setCachedAssets} employees={cachedUsers} setEmployees={setCachedUsers} />} />
+        <Route path="audit" element={<AuditScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} auditCycles={cachedAuditCycles} setAuditCycles={setCachedAuditCycles} assets={cachedAssets} setAssets={setCachedAssets} auditors={cachedUsers} setAuditors={setCachedUsers} />} />
+        <Route path="reports" element={<ReportsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} summary={cachedSummary} setSummary={setCachedSummary} assets={cachedAssets} setAssets={setCachedAssets} />} />
         <Route path="notifications" element={<ActivityLogsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} notifications={notifications} setNotifications={setNotifications} />} />
       </Route>
 

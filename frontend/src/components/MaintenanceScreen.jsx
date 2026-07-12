@@ -11,11 +11,21 @@ import {
   getUsers
 } from '../services/api';
 
-export function MaintenanceScreen({ onNavigate, user, onAction }) {
-  const [requests, setRequests] = useState([]);
-  const [assets, setAssets] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
+export function MaintenanceScreen({ 
+  onNavigate, 
+  user, 
+  onAction, 
+  requests: propRequests, 
+  setRequests: setPropRequests, 
+  assets: propAssets, 
+  setAssets: setPropAssets, 
+  employees: propEmployees, 
+  setEmployees: setPropEmployees 
+}) {
+  const [requests, setRequests] = useState(propRequests || []);
+  const [assets, setAssets] = useState(propAssets || []);
+  const [employees, setEmployees] = useState(propEmployees || []);
+  const [loading, setLoading] = useState(requests.length === 0);
 
   // New Request Form State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -39,15 +49,21 @@ export function MaintenanceScreen({ onNavigate, user, onAction }) {
 
   const fetchRequests = async () => {
     try {
-      setLoading(true);
+      if (requests.length === 0) setLoading(true);
       const res = await getMaintenanceRequests();
-      setRequests(res.data?.data || []);
+      const reqData = res.data?.data || [];
+      setRequests(reqData);
+      if (setPropRequests) setPropRequests(reqData);
 
       const assetRes = await getAssets({ size: 100 });
-      setAssets(assetRes.data?.data?.content || []);
+      const assetContent = assetRes.data?.data?.content || [];
+      setAssets(assetContent);
+      if (setPropAssets) setPropAssets(assetContent);
 
       const userRes = await getUsers({ size: 100 });
-      setEmployees(userRes.data?.data?.content || []);
+      const empContent = userRes.data?.data?.content || [];
+      setEmployees(empContent);
+      if (setPropEmployees) setPropEmployees(empContent);
     } catch (err) {
       console.error('Error loading maintenance data:', err);
     } finally {

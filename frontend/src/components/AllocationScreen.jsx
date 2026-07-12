@@ -11,13 +11,25 @@ import {
   rejectTransfer 
 } from '../services/api';
 
-export function AllocationScreen({ onNavigate, user, onAction }) {
+export function AllocationScreen({ 
+  onNavigate, 
+  user, 
+  onAction, 
+  assets: propAssets, 
+  setAssets: setPropAssets, 
+  employees: propEmployees, 
+  setEmployees: setPropEmployees, 
+  allocations: propAllocations, 
+  setAllocations: setPropAllocations, 
+  transfers: propTransfers, 
+  setTransfers: setPropTransfers 
+}) {
   const [activeSubTab, setActiveSubTab] = useState('allocate'); // 'allocate' or 'transfers'
-  const [assets, setAssets] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [allocations, setAllocations] = useState([]);
-  const [transfers, setTransfers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [assets, setAssets] = useState(propAssets || []);
+  const [employees, setEmployees] = useState(propEmployees || []);
+  const [allocations, setAllocations] = useState(propAllocations || []);
+  const [transfers, setTransfers] = useState(propTransfers || []);
+  const [loading, setLoading] = useState(assets.length === 0);
 
   // Allocation/Transfer Form State
   const [selectedAssetId, setSelectedAssetId] = useState('');
@@ -39,22 +51,30 @@ export function AllocationScreen({ onNavigate, user, onAction }) {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      if (assets.length === 0) setLoading(true);
       // Fetch all assets
       const assetRes = await getAssets({ size: 100 });
-      setAssets(assetRes.data?.data?.content || []);
+      const assetContent = assetRes.data?.data?.content || [];
+      setAssets(assetContent);
+      if (setPropAssets) setPropAssets(assetContent);
 
       // Fetch employees
       const userRes = await getUsers({ size: 100 });
-      setEmployees(userRes.data?.data?.content || []);
+      const empContent = userRes.data?.data?.content || [];
+      setEmployees(empContent);
+      if (setPropEmployees) setPropEmployees(empContent);
 
       // Fetch active allocations
       const allocRes = await getActiveAllocations();
-      setAllocations(allocRes.data?.data || []);
+      const allocData = allocRes.data?.data || [];
+      setAllocations(allocData);
+      if (setPropAllocations) setPropAllocations(allocData);
 
       // Fetch transfer requests
       const transferRes = await getTransfers();
-      setTransfers(transferRes.data?.data || []);
+      const transferData = transferRes.data?.data || [];
+      setTransfers(transferData);
+      if (setPropTransfers) setPropTransfers(transferData);
     } catch (err) {
       console.error('Error fetching allocation datasets:', err);
     } finally {

@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { getDashboardSummary, getActivityLogs } from '../services/api';
 
-export function DashboardScreen({ onNavigate, user, onAction }) {
-  const [summary, setSummary] = useState(null);
+export function DashboardScreen({ onNavigate, user, onAction, summary: propSummary, setSummary: setPropSummary }) {
+  const [summary, setSummary] = useState(propSummary || null);
   const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!summary);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
+        if (!summary) setLoading(true);
         // Fetch dashboard summary
         const summaryRes = await getDashboardSummary();
-        setSummary(summaryRes.data.data);
+        const data = summaryRes.data.data;
+        setSummary(data);
+        if (setPropSummary) setPropSummary(data);
 
         // Fetch recent activity logs
         try {

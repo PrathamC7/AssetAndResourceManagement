@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { getAssets, getCategories as fetchCategoriesApi, registerAsset } from '../services/api';
 
-export function AssetsScreen({ onNavigate, user, onAction }) {
-  const [assets, setAssets] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+export function AssetsScreen({ onNavigate, user, onAction, assets: propAssets, setAssets: setPropAssets, categories: propCategories, setCategories: setPropCategories }) {
+  const [assets, setAssets] = useState(propAssets || []);
+  const [categories, setCategories] = useState(propCategories || []);
+  const [loading, setLoading] = useState(assets.length === 0);
   const [error, setError] = useState(null);
 
   // Filter & Search State
@@ -61,14 +61,16 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
   // Fetch Assets and Categories
   const fetchAssets = async () => {
     try {
-      setLoading(true);
+      if (assets.length === 0) setLoading(true);
       const params = { page, size: 10 };
       if (searchTerm) params.search = searchTerm;
       if (selectedCategory) params.categoryId = selectedCategory;
       if (selectedState) params.state = selectedState;
 
       const res = await getAssets(params);
-      setAssets(res.data.data?.content || []);
+      const content = res.data.data?.content || [];
+      setAssets(content);
+      if (setPropAssets) setPropAssets(content);
       setTotalPages(res.data.data?.totalPages || 0);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -80,7 +82,9 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
   const fetchCategories = async () => {
     try {
       const res = await fetchCategoriesApi();
-      setCategories(res.data.data || []);
+      const data = res.data.data || [];
+      setCategories(data);
+      if (setPropCategories) setPropCategories(data);
     } catch (err) {
       console.error('Error loading categories:', err);
     }
