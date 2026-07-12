@@ -3,9 +3,11 @@ package com.application.project.service;
 import com.application.project.dto.DepartmentRequest;
 import com.application.project.dto.DepartmentResponse;
 import com.application.project.entity.Department;
+import com.application.project.entity.User;
 import com.application.project.exception.ConflictException;
 import com.application.project.exception.ResourceNotFoundException;
 import com.application.project.repository.DepartmentRepository;
+import com.application.project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,16 +19,29 @@ import java.util.stream.Collectors;
 public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
+    private final UserRepository userRepository;
 
     public DepartmentResponse create(DepartmentRequest request) {
         if (departmentRepository.existsByName(request.getName())) {
             throw new ConflictException("Department name already exists");
         }
 
+        Department parent = null;
+        if (request.getParentId() != null) {
+            parent = departmentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent department not found"));
+        }
+
+        User head = null;
+        if (request.getHeadId() != null) {
+            head = userRepository.findById(request.getHeadId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Head user not found"));
+        }
+
         Department dept = Department.builder()
                 .name(request.getName())
-                .parentId(request.getParentId())
-                .headId(request.getHeadId())
+                .parentDepartment(parent)
+                .head(head)
                 .isActive(true)
                 .build();
 
@@ -55,8 +70,22 @@ public class DepartmentService {
         }
 
         dept.setName(request.getName());
-        dept.setParentId(request.getParentId());
-        dept.setHeadId(request.getHeadId());
+        
+        if (request.getParentId() != null) {
+            Department parent = departmentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent department not found"));
+            dept.setParentDepartment(parent);
+        } else {
+            dept.setParentDepartment(null);
+        }
+
+        if (request.getHeadId() != null) {
+            User head = userRepository.findById(request.getHeadId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Head user not found"));
+            dept.setHead(head);
+        } else {
+            dept.setHead(null);
+        }
 
         dept = departmentRepository.save(dept);
         return toResponse(dept);
@@ -74,8 +103,8 @@ public class DepartmentService {
         return DepartmentResponse.builder()
                 .id(dept.getId())
                 .name(dept.getName())
-                .parentId(dept.getParentId())
-                .headId(dept.getHeadId())
+                .parentId(dept.getParentDepartment() != null ? dept.getParentDepartment().getId() : null)
+                .headId(dept.getHead() != null ? dept.getHead().getId() : null)
                 .isActive(dept.getIsActive())
                 .createdAt(dept.getCreatedAt())
                 .updatedAt(dept.getUpdatedAt())

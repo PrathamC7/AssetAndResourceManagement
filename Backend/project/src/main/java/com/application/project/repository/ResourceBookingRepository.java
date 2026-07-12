@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface ResourceBookingRepository extends JpaRepository<ResourceBooking, Long> {
 
-    @Query("SELECT b FROM ResourceBooking b WHERE b.assetId = :assetId " +
+    @Query("SELECT b FROM ResourceBooking b WHERE b.asset.id = :assetId " +
            "AND b.status IN ('UPCOMING', 'ONGOING') " +
            "AND b.startTime < :endTime AND b.endTime > :startTime")
     List<ResourceBooking> findOverlapping(@Param("assetId") Long assetId,
@@ -21,6 +21,6 @@ public interface ResourceBookingRepository extends JpaRepository<ResourceBooking
                                           @Param("endTime") LocalDateTime endTime);
 
     List<ResourceBooking> findByAssetIdAndStatusIn(Long assetId, List<BookingStatus> statuses);
-    List<ResourceBooking> findByBookedBy(Long userId);
+    List<ResourceBooking> findByBookedBy_Id(Long userId);
     long countByStatus(BookingStatus status);
 }

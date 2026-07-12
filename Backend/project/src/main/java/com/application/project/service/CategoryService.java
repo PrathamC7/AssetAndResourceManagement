@@ -4,6 +4,7 @@ import com.application.project.dto.CategoryRequest;
 import com.application.project.dto.CategoryResponse;
 import com.application.project.entity.AssetCategory;
 import com.application.project.entity.CategoryCustomField;
+import com.application.project.enums.CustomFieldType;
 import com.application.project.exception.ConflictException;
 import com.application.project.exception.ResourceNotFoundException;
 import com.application.project.repository.AssetCategoryRepository;
@@ -74,11 +75,14 @@ public class CategoryService {
     private List<CategoryCustomField> saveCustomFields(Long categoryId, List<CategoryRequest.CustomFieldDto> dtos) {
         if (dtos == null || dtos.isEmpty()) return new ArrayList<>();
 
+        AssetCategory cat = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
         List<CategoryCustomField> fields = dtos.stream()
                 .map(dto -> CategoryCustomField.builder()
-                        .categoryId(categoryId)
+                        .category(cat)
                         .fieldName(dto.getFieldName())
-                        .fieldType(dto.getFieldType())
+                        .fieldType(dto.getFieldType() != null ? CustomFieldType.valueOf(dto.getFieldType().toUpperCase()) : null)
                         .isRequired(dto.getIsRequired() != null ? dto.getIsRequired() : false)
                         .options(dto.getOptions())
                         .displayOrder(dto.getDisplayOrder() != null ? dto.getDisplayOrder() : 0)
@@ -93,7 +97,7 @@ public class CategoryService {
                 .map(f -> CategoryResponse.CustomFieldResponse.builder()
                         .id(f.getId())
                         .fieldName(f.getFieldName())
-                        .fieldType(f.getFieldType())
+                        .fieldType(f.getFieldType() != null ? f.getFieldType().name() : null)
                         .isRequired(f.getIsRequired())
                         .options(f.getOptions())
                         .displayOrder(f.getDisplayOrder())

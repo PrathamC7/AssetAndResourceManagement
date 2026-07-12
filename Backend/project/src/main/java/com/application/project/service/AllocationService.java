@@ -41,10 +41,16 @@ public class AllocationService {
             throw new ConflictException("Asset is not available. Current state: " + asset.getLifecycleState());
         }
 
+        User assignee = userRepository.findById(request.getAssignedTo())
+                .orElseThrow(() -> new ResourceNotFoundException("Assignee user not found"));
+
+        User allocator = userRepository.findById(allocatedBy)
+                .orElseThrow(() -> new ResourceNotFoundException("Allocator user not found"));
+
         Allocation allocation = Allocation.builder()
-                .assetId(request.getAssetId())
-                .assignedTo(request.getAssignedTo())
-                .allocatedBy(allocatedBy)
+                .asset(asset)
+                .assignedTo(assignee)
+                .allocatedBy(allocator)
                 .expectedReturnDate(request.getExpectedReturnDate())
                 .isActive(true)
                 .isOverdue(false)
@@ -56,12 +62,12 @@ public class AllocationService {
         assetRepository.save(asset);
 
         historyRepository.save(AssetHistory.builder()
-                .assetId(asset.getId())
+                .asset(asset)
                 .eventType(HistoryEventType.ALLOCATION)
                 .previousState(LifecycleState.AVAILABLE)
                 .newState(LifecycleState.ALLOCATED)
-                .description("Asset allocated to user " + request.getAssignedTo())
-                .performedBy(allocatedBy)
+                .description("Asset allocated to user " + assignee.getId())
+                .performedBy(allocator)
                 .build());
 
         return toResponse(allocation);
@@ -76,23 +82,28 @@ public class AllocationService {
             throw new ConflictException("Allocation is already closed");
         }
 
+        User performer = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         allocation.setIsActive(false);
         allocation.setActualReturnDate(LocalDateTime.now());
         allocation.setConditionNotes(request.getConditionNotes());
         allocationRepository.save(allocation);
 
-        Asset asset = assetRepository.findById(allocation.getAssetId())
-                .orElseThrow(() -> new ResourceNotFoundException("Asset not found"));
+        Asset asset = allocation.getAsset();
+        if (asset == null) {
+            throw new ResourceNotFoundException("Asset associated with allocation not found");
+        }
         asset.setLifecycleState(LifecycleState.AVAILABLE);
         assetRepository.save(asset);
 
         historyRepository.save(AssetHistory.builder()
-                .assetId(asset.getId())
+                .asset(asset)
                 .eventType(HistoryEventType.RETURN)
                 .previousState(LifecycleState.ALLOCATED)
                 .newState(LifecycleState.AVAILABLE)
                 .description("Asset returned by user " + userId)
-                .performedBy(userId)
+                .performedBy(performer)
                 .build());
 
         return toResponse(allocation);
@@ -106,21 +117,18 @@ public class AllocationService {
     }
 
     private AllocationResponse toResponse(Allocation alloc) {
-        String assetName = assetRepository.findById(alloc.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String assetTag = assetRepository.findById(alloc.getAssetId())
-                .map(Asset::getAssetTag).orElse("Unknown");
-        String assigneeName = userRepository.findById(alloc.getAssignedTo())
-                .map(User::getName).orElse("Unknown");
+        String assetName = alloc.getAsset() != null ? alloc.getAsset().getName() : "Unknown";
+        String assetTag = alloc.getAsset() != null ? alloc.getAsset().getAssetTag() : "Unknown";
+        String assigneeName = alloc.getAssignedTo() != null ? alloc.getAssignedTo().getName() : "Unknown";
 
         return AllocationResponse.builder()
                 .id(alloc.getId())
-                .assetId(alloc.getAssetId())
+                .assetId(alloc.getAsset() != null ? alloc.getAsset().getId() : null)
                 .assetName(assetName)
                 .assetTag(assetTag)
-                .assignedTo(alloc.getAssignedTo())
+                .assignedTo(alloc.getAssignedTo() != null ? alloc.getAssignedTo().getId() : null)
                 .assignedToName(assigneeName)
-                .allocatedBy(alloc.getAllocatedBy())
+                .allocatedBy(alloc.getAllocatedBy() != null ? alloc.getAllocatedBy().getId() : null)
                 .expectedReturnDate(alloc.getExpectedReturnDate())
                 .actualReturnDate(alloc.getActualReturnDate())
                 .conditionNotes(alloc.getConditionNotes())

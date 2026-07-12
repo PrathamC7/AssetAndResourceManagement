@@ -34,13 +34,16 @@ public class AuditService {
 
     @Transactional
     public AuditResponse createCycle(AuditCycleRequest request, Long userId) {
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Creator user not found"));
+
         AuditCycle cycle = AuditCycle.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .status(AuditStatus.OPEN)
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .createdBy(userId)
+                .createdBy(creator)
                 .build();
         cycle = cycleRepository.save(cycle);
         return toResponse(cycle);
@@ -55,23 +58,27 @@ public class AuditService {
             throw new ConflictException("Cannot assign to a closed audit cycle");
         }
 
+        Asset asset = assetRepository.findById(request.getAssetId())
+                .orElseThrow(() -> new ResourceNotFoundException("Asset not found"));
+
+        User auditor = userRepository.findById(request.getAuditorId())
+                .orElseThrow(() -> new ResourceNotFoundException("Auditor user not found"));
+
         AuditAssignment assignment = AuditAssignment.builder()
-                .cycleId(cycleId)
-                .assetId(request.getAssetId())
-                .auditorId(request.getAuditorId())
+                .cycle(cycle)
+                .asset(asset)
+                .auditor(auditor)
                 .build();
         assignment = assignmentRepository.save(assignment);
 
-        String assetName = assetRepository.findById(assignment.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String auditorName = userRepository.findById(assignment.getAuditorId())
-                .map(User::getName).orElse("Unknown");
+        String assetName = asset.getName();
+        String auditorName = auditor.getName();
 
         return AuditResponse.AssignmentResponse.builder()
                 .id(assignment.getId())
-                .assetId(assignment.getAssetId())
+                .assetId(asset.getId())
                 .assetName(assetName)
-                .auditorId(assignment.getAuditorId())
+                .auditorId(auditor.getId())
                 .auditorName(auditorName)
                 .build();
     }
@@ -86,18 +93,18 @@ public class AuditService {
         assignment.setAuditedAt(LocalDateTime.now());
         assignmentRepository.save(assignment);
 
-        String assetName = assetRepository.findById(assignment.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String auditorName = userRepository.findById(assignment.getAuditorId())
-                .map(User::getName).orElse("Unknown");
+        Asset asset = assignment.getAsset();
+        User auditor = assignment.getAuditor();
+        String assetName = asset != null ? asset.getName() : "Unknown";
+        String auditorName = auditor != null ? auditor.getName() : "Unknown";
 
         return AuditResponse.AssignmentResponse.builder()
                 .id(assignment.getId())
-                .assetId(assignment.getAssetId())
+                .assetId(asset != null ? asset.getId() : null)
                 .assetName(assetName)
-                .auditorId(assignment.getAuditorId())
+                .auditorId(auditor != null ? auditor.getId() : null)
                 .auditorName(auditorName)
-                .finding(assignment.getFinding().name())
+                .finding(assignment.getFinding() != null ? assignment.getFinding().name() : null)
                 .notes(assignment.getNotes())
                 .auditedAt(assignment.getAuditedAt())
                 .build();
@@ -120,7 +127,7 @@ public class AuditService {
 
     public AuditResponse getById(Long id) {
         AuditCycle cycle = cycleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Audit cycle not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Audit cycle not found with id: " + id));
         return toResponse(cycle);
     }
 
@@ -129,15 +136,15 @@ public class AuditService {
 
         List<AuditResponse.AssignmentResponse> assignmentResponses = assignments.stream()
                 .map(a -> {
-                    String assetName = assetRepository.findById(a.getAssetId())
-                            .map(Asset::getName).orElse("Unknown");
-                    String auditorName = userRepository.findById(a.getAuditorId())
-                            .map(User::getName).orElse("Unknown");
+                    Asset asset = a.getAsset();
+                    User auditor = a.getAuditor();
+                    String assetName = asset != null ? asset.getName() : "Unknown";
+                    String auditorName = auditor != null ? auditor.getName() : "Unknown";
                     return AuditResponse.AssignmentResponse.builder()
                             .id(a.getId())
-                            .assetId(a.getAssetId())
+                            .assetId(asset != null ? asset.getId() : null)
                             .assetName(assetName)
-                            .auditorId(a.getAuditorId())
+                            .auditorId(auditor != null ? auditor.getId() : null)
                             .auditorName(auditorName)
                             .finding(a.getFinding() != null ? a.getFinding().name() : null)
                             .notes(a.getNotes())
@@ -153,7 +160,7 @@ public class AuditService {
                 .status(cycle.getStatus().name())
                 .startDate(cycle.getStartDate())
                 .endDate(cycle.getEndDate())
-                .createdBy(cycle.getCreatedBy())
+                .createdBy(cycle.getCreatedBy() != null ? cycle.getCreatedBy().getId() : null)
                 .assignments(assignmentResponses)
                 .createdAt(cycle.getCreatedAt())
                 .build();

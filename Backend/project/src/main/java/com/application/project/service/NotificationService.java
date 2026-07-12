@@ -1,8 +1,10 @@
 package com.application.project.service;
 
 import com.application.project.entity.Notification;
+import com.application.project.entity.User;
 import com.application.project.exception.ResourceNotFoundException;
 import com.application.project.repository.NotificationRepository;
+import com.application.project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +15,15 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     public Notification create(Long userId, String title, String message, String type,
                                String referenceType, Long referenceId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
         Notification notification = Notification.builder()
-                .userId(userId)
+                .user(user)
                 .title(title)
                 .message(message)
                 .type(type)

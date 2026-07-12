@@ -46,9 +46,12 @@ public class BookingService {
             throw new ConflictException("Booking overlaps with an existing booking");
         }
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         ResourceBooking booking = ResourceBooking.builder()
-                .assetId(request.getAssetId())
-                .bookedBy(userId)
+                .asset(asset)
+                .bookedBy(user)
                 .title(request.getTitle())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
@@ -89,16 +92,14 @@ public class BookingService {
     }
 
     private BookingResponse toResponse(ResourceBooking booking) {
-        String assetName = assetRepository.findById(booking.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String userName = userRepository.findById(booking.getBookedBy())
-                .map(User::getName).orElse("Unknown");
+        String assetName = booking.getAsset() != null ? booking.getAsset().getName() : "Unknown";
+        String userName = booking.getBookedBy() != null ? booking.getBookedBy().getName() : "Unknown";
 
         return BookingResponse.builder()
                 .id(booking.getId())
-                .assetId(booking.getAssetId())
+                .assetId(booking.getAsset() != null ? booking.getAsset().getId() : null)
                 .assetName(assetName)
-                .bookedBy(booking.getBookedBy())
+                .bookedBy(booking.getBookedBy() != null ? booking.getBookedBy().getId() : null)
                 .bookedByName(userName)
                 .title(booking.getTitle())
                 .startTime(booking.getStartTime())

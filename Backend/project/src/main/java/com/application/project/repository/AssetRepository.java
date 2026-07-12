@@ -23,7 +23,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     @Query("SELECT a FROM Asset a WHERE " +
            "(:search IS NULL OR a.name LIKE %:search% OR a.assetTag LIKE %:search%) AND " +
            "(:state IS NULL OR a.lifecycleState = :state) AND " +
-           "(:categoryId IS NULL OR a.categoryId = :categoryId)")
+           "(:categoryId IS NULL OR a.category.id = :categoryId)")
     Page<Asset> findFiltered(@Param("search") String search,
                              @Param("state") LifecycleState state,
                              @Param("categoryId") Long categoryId,

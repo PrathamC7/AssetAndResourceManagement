@@ -35,8 +35,11 @@ public class MaintenanceService {
 
     @Transactional
     public MaintenanceResponse create(MaintenanceRequestDto request, Long userId) {
-        assetRepository.findById(request.getAssetId())
+        Asset asset = assetRepository.findById(request.getAssetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Asset not found"));
+
+        User requester = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Requester user not found"));
 
         Priority priority = Priority.MEDIUM;
         if (request.getPriority() != null) {
@@ -44,8 +47,8 @@ public class MaintenanceService {
         }
 
         MaintenanceRequest mr = MaintenanceRequest.builder()
-                .assetId(request.getAssetId())
-                .requestedBy(userId)
+                .asset(asset)
+                .requestedBy(requester)
                 .issueDescription(request.getIssueDescription())
                 .priority(priority)
                 .status(MaintenanceStatus.PENDING)
@@ -65,18 +68,24 @@ public class MaintenanceService {
         maintenanceRepository.save(mr);
 
         // Put asset under maintenance
-        Asset asset = assetRepository.findById(mr.getAssetId()).orElseThrow();
+        Asset asset = mr.getAsset();
+        if (asset == null) {
+            throw new ResourceNotFoundException("Asset associated with request not found");
+        }
         LifecycleState prev = asset.getLifecycleState();
         asset.setLifecycleState(LifecycleState.UNDER_MAINTENANCE);
         assetRepository.save(asset);
 
+        User performer = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         historyRepository.save(AssetHistory.builder()
-                .assetId(asset.getId())
+                .asset(asset)
                 .eventType(HistoryEventType.MAINTENANCE)
                 .previousState(prev)
                 .newState(LifecycleState.UNDER_MAINTENANCE)
                 .description("Maintenance request approved")
-                .performedBy(userId)
+                .performedBy(performer)
                 .build());
 
         return toResponse(mr);
@@ -97,8 +106,12 @@ public class MaintenanceService {
         if (mr.getStatus() != MaintenanceStatus.APPROVED) {
             throw new ConflictException("Request must be approved before assigning technician");
         }
+
+        User technician = userRepository.findById(technicianId)
+                .orElseThrow(() -> new ResourceNotFoundException("Technician not found"));
+
         mr.setStatus(MaintenanceStatus.TECHNICIAN_ASSIGNED);
-        mr.setAssignedTo(technicianId);
+        mr.setAssignedTo(technician);
         maintenanceRepository.save(mr);
         return toResponse(mr);
     }
@@ -127,17 +140,23 @@ public class MaintenanceService {
         maintenanceRepository.save(mr);
 
         // Restore asset to available
-        Asset asset = assetRepository.findById(mr.getAssetId()).orElseThrow();
+        Asset asset = mr.getAsset();
+        if (asset == null) {
+            throw new ResourceNotFoundException("Asset associated with request not found");
+        }
         asset.setLifecycleState(LifecycleState.AVAILABLE);
         assetRepository.save(asset);
 
+        User performer = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         historyRepository.save(AssetHistory.builder()
-                .assetId(asset.getId())
+                .asset(asset)
                 .eventType(HistoryEventType.MAINTENANCE)
                 .previousState(LifecycleState.UNDER_MAINTENANCE)
                 .newState(LifecycleState.AVAILABLE)
                 .description("Maintenance resolved: " + resolutionNotes)
-                .performedBy(userId)
+                .performedBy(performer)
                 .build());
 
         return toResponse(mr);
@@ -161,24 +180,21 @@ public class MaintenanceService {
     }
 
     private MaintenanceResponse toResponse(MaintenanceRequest mr) {
-        String assetName = assetRepository.findById(mr.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String requesterName = userRepository.findById(mr.getRequestedBy())
-                .map(User::getName).orElse("Unknown");
-        String assigneeName = mr.getAssignedTo() != null ?
-                userRepository.findById(mr.getAssignedTo()).map(User::getName).orElse("Unknown") : null;
+        String assetName = mr.getAsset() != null ? mr.getAsset().getName() : "Unknown";
+        String requesterName = mr.getRequestedBy() != null ? mr.getRequestedBy().getName() : "Unknown";
+        String assigneeName = mr.getAssignedTo() != null ? mr.getAssignedTo().getName() : null;
 
         return MaintenanceResponse.builder()
                 .id(mr.getId())
-                .assetId(mr.getAssetId())
+                .assetId(mr.getAsset() != null ? mr.getAsset().getId() : null)
                 .assetName(assetName)
-                .requestedBy(mr.getRequestedBy())
+                .requestedBy(mr.getRequestedBy() != null ? mr.getRequestedBy().getId() : null)
                 .requestedByName(requesterName)
                 .issueDescription(mr.getIssueDescription())
                 .priority(mr.getPriority().name())
                 .status(mr.getStatus().name())
                 .photoUrl(mr.getPhotoUrl())
-                .assignedTo(mr.getAssignedTo())
+                .assignedTo(mr.getAssignedTo() != null ? mr.getAssignedTo().getId() : null)
                 .assignedToName(assigneeName)
                 .resolutionNotes(mr.getResolutionNotes())
                 .resolvedAt(mr.getResolvedAt())

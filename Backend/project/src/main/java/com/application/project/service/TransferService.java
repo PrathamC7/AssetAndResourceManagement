@@ -36,10 +36,16 @@ public class TransferService {
             throw new ConflictException("Asset must be allocated to request a transfer");
         }
 
+        User fromUser = userRepository.findById(fromUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("From user not found"));
+
+        User toUser = userRepository.findById(request.getToUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("To user not found"));
+
         Transfer transfer = Transfer.builder()
-                .assetId(request.getAssetId())
-                .fromUserId(fromUserId)
-                .toUserId(request.getToUserId())
+                .asset(asset)
+                .fromUser(fromUser)
+                .toUser(toUser)
                 .reason(request.getReason())
                 .status(TransferStatus.REQUESTED)
                 .build();
@@ -57,24 +63,29 @@ public class TransferService {
             throw new ConflictException("Transfer is not in REQUESTED status");
         }
 
+        User approver = userRepository.findById(approvedBy)
+                .orElseThrow(() -> new ResourceNotFoundException("Approver user not found"));
+
         transfer.setStatus(TransferStatus.APPROVED);
-        transfer.setApprovedBy(approvedBy);
+        transfer.setApprovedBy(approver);
         transfer.setApprovedAt(LocalDateTime.now());
         transferRepository.save(transfer);
 
         // Close current allocation
-        allocationRepository.findByAssetIdAndIsActive(transfer.getAssetId(), true)
-                .ifPresent(alloc -> {
-                    alloc.setIsActive(false);
-                    alloc.setActualReturnDate(LocalDateTime.now());
-                    allocationRepository.save(alloc);
-                });
+        if (transfer.getAsset() != null) {
+            allocationRepository.findByAssetIdAndIsActive(transfer.getAsset().getId(), true)
+                    .ifPresent(alloc -> {
+                        alloc.setIsActive(false);
+                        alloc.setActualReturnDate(LocalDateTime.now());
+                        allocationRepository.save(alloc);
+                    });
+        }
 
         // Create new allocation for target user
         Allocation newAlloc = Allocation.builder()
-                .assetId(transfer.getAssetId())
-                .assignedTo(transfer.getToUserId())
-                .allocatedBy(approvedBy)
+                .asset(transfer.getAsset())
+                .assignedTo(transfer.getToUser())
+                .allocatedBy(approver)
                 .expectedReturnDate(java.time.LocalDate.now().plusDays(30))
                 .isActive(true)
                 .isOverdue(false)
@@ -82,12 +93,12 @@ public class TransferService {
         allocationRepository.save(newAlloc);
 
         historyRepository.save(AssetHistory.builder()
-                .assetId(transfer.getAssetId())
+                .asset(transfer.getAsset())
                 .eventType(HistoryEventType.TRANSFER)
                 .previousState(LifecycleState.ALLOCATED)
                 .newState(LifecycleState.ALLOCATED)
-                .description("Asset transferred from user " + transfer.getFromUserId() + " to user " + transfer.getToUserId())
-                .performedBy(approvedBy)
+                .description("Asset transferred from user " + transfer.getFromUser().getId() + " to user " + transfer.getToUser().getId())
+                .performedBy(approver)
                 .build());
 
         return toResponse(transfer);
@@ -102,8 +113,11 @@ public class TransferService {
             throw new ConflictException("Transfer is not in REQUESTED status");
         }
 
+        User rejecter = userRepository.findById(rejectedBy)
+                .orElseThrow(() -> new ResourceNotFoundException("Rejecter user not found"));
+
         transfer.setStatus(TransferStatus.REJECTED);
-        transfer.setApprovedBy(rejectedBy);
+        transfer.setApprovedBy(rejecter);
         transfer.setApprovedAt(LocalDateTime.now());
         transferRepository.save(transfer);
 
@@ -117,24 +131,21 @@ public class TransferService {
     }
 
     private TransferResponse toResponse(Transfer transfer) {
-        String assetName = assetRepository.findById(transfer.getAssetId())
-                .map(Asset::getName).orElse("Unknown");
-        String fromName = userRepository.findById(transfer.getFromUserId())
-                .map(User::getName).orElse("Unknown");
-        String toName = userRepository.findById(transfer.getToUserId())
-                .map(User::getName).orElse("Unknown");
+        String assetName = transfer.getAsset() != null ? transfer.getAsset().getName() : "Unknown";
+        String fromName = transfer.getFromUser() != null ? transfer.getFromUser().getName() : "Unknown";
+        String toName = transfer.getToUser() != null ? transfer.getToUser().getName() : "Unknown";
 
         return TransferResponse.builder()
                 .id(transfer.getId())
-                .assetId(transfer.getAssetId())
+                .assetId(transfer.getAsset() != null ? transfer.getAsset().getId() : null)
                 .assetName(assetName)
-                .fromUserId(transfer.getFromUserId())
+                .fromUserId(transfer.getFromUser() != null ? transfer.getFromUser().getId() : null)
                 .fromUserName(fromName)
-                .toUserId(transfer.getToUserId())
+                .toUserId(transfer.getToUser() != null ? transfer.getToUser().getId() : null)
                 .toUserName(toName)
                 .reason(transfer.getReason())
                 .status(transfer.getStatus().name())
-                .approvedBy(transfer.getApprovedBy())
+                .approvedBy(transfer.getApprovedBy() != null ? transfer.getApprovedBy().getId() : null)
                 .approvedAt(transfer.getApprovedAt())
                 .createdAt(transfer.getCreatedAt())
                 .build();

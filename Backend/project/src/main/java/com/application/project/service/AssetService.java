@@ -5,6 +5,7 @@ import com.application.project.dto.AssetResponse;
 import com.application.project.entity.Asset;
 import com.application.project.entity.AssetCategory;
 import com.application.project.entity.AssetHistory;
+import com.application.project.entity.User;
 import com.application.project.enums.HistoryEventType;
 import com.application.project.enums.LifecycleState;
 import com.application.project.exception.ConflictException;
@@ -13,6 +14,7 @@ import com.application.project.exception.ResourceNotFoundException;
 import com.application.project.repository.AssetCategoryRepository;
 import com.application.project.repository.AssetHistoryRepository;
 import com.application.project.repository.AssetRepository;
+import com.application.project.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +30,7 @@ public class AssetService {
     private final AssetRepository assetRepository;
     private final AssetCategoryRepository categoryRepository;
     private final AssetHistoryRepository historyRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public AssetResponse register(AssetRegistrationRequest request, Long userId) {
@@ -37,10 +40,16 @@ public class AssetService {
 
         String assetTag = generateNextTag();
 
+        AssetCategory category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Asset category not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         Asset asset = Asset.builder()
                 .assetTag(assetTag)
                 .name(request.getName())
-                .categoryId(request.getCategoryId())
+                .category(category)
                 .serialNumber(request.getSerialNumber())
                 .acquisitionDate(request.getAcquisitionDate())
                 .cost(request.getCost() != null ? request.getCost() : BigDecimal.ZERO)
@@ -50,18 +59,18 @@ public class AssetService {
                 .isBookable(request.getIsBookable() != null ? request.getIsBookable() : false)
                 .lifecycleState(LifecycleState.AVAILABLE)
                 .customFields(request.getCustomFields())
-                .registeredBy(userId)
+                .registeredBy(user)
                 .build();
 
         asset = assetRepository.save(asset);
 
         // Record history
         historyRepository.save(AssetHistory.builder()
-                .assetId(asset.getId())
+                .asset(asset)
                 .eventType(HistoryEventType.REGISTRATION)
                 .newState(LifecycleState.AVAILABLE)
                 .description("Asset registered: " + asset.getName())
-                .performedBy(userId)
+                .performedBy(user)
                 .build());
 
         return toResponse(asset);
@@ -93,16 +102,19 @@ public class AssetService {
                     "Cannot transition from " + currentState + " to " + newState);
         }
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         asset.setLifecycleState(newState);
         assetRepository.save(asset);
 
         historyRepository.save(AssetHistory.builder()
-                .assetId(assetId)
+                .asset(asset)
                 .eventType(HistoryEventType.STATE_CHANGE)
                 .previousState(currentState)
                 .newState(newState)
                 .description(description)
-                .performedBy(userId)
+                .performedBy(user)
                 .build());
     }
 
@@ -129,15 +141,13 @@ public class AssetService {
     }
 
     private AssetResponse toResponse(Asset asset) {
-        String categoryName = categoryRepository.findById(asset.getCategoryId())
-                .map(AssetCategory::getName)
-                .orElse("Unknown");
+        String categoryName = asset.getCategory() != null ? asset.getCategory().getName() : "Unknown";
 
         return AssetResponse.builder()
                 .id(asset.getId())
                 .assetTag(asset.getAssetTag())
                 .name(asset.getName())
-                .categoryId(asset.getCategoryId())
+                .categoryId(asset.getCategory() != null ? asset.getCategory().getId() : null)
                 .categoryName(categoryName)
                 .serialNumber(asset.getSerialNumber())
                 .acquisitionDate(asset.getAcquisitionDate())
@@ -148,7 +158,7 @@ public class AssetService {
                 .isBookable(asset.getIsBookable())
                 .lifecycleState(asset.getLifecycleState().name())
                 .customFields(asset.getCustomFields())
-                .registeredBy(asset.getRegisteredBy())
+                .registeredBy(asset.getRegisteredBy() != null ? asset.getRegisteredBy().getId() : null)
                 .createdAt(asset.getCreatedAt())
                 .updatedAt(asset.getUpdatedAt())
                 .build();

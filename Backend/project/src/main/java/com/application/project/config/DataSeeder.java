@@ -84,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
         assetRepository.save(Asset.builder()
                 .assetTag("AF-0001")
                 .name("MacBook Pro 16\"")
-                .categoryId(electronics.getId())
+                .category(electronics)
                 .serialNumber("MBP-2026-001")
                 .acquisitionDate(LocalDate.of(2026, 1, 15))
                 .cost(new BigDecimal("2499.00"))
@@ -92,13 +92,13 @@ public class DataSeeder implements CommandLineRunner {
                 .location("Engineering Lab")
                 .isBookable(false)
                 .lifecycleState(LifecycleState.AVAILABLE)
-                .registeredBy(admin.getId())
+                .registeredBy(admin)
                 .build());
 
         assetRepository.save(Asset.builder()
                 .assetTag("AF-0002")
                 .name("Standing Desk - Uplift V2")
-                .categoryId(furniture.getId())
+                .category(furniture)
                 .serialNumber("DESK-2026-001")
                 .acquisitionDate(LocalDate.of(2026, 2, 1))
                 .cost(new BigDecimal("799.00"))
@@ -106,13 +106,13 @@ public class DataSeeder implements CommandLineRunner {
                 .location("Floor 3 - Bay A")
                 .isBookable(false)
                 .lifecycleState(LifecycleState.AVAILABLE)
-                .registeredBy(admin.getId())
+                .registeredBy(admin)
                 .build());
 
         assetRepository.save(Asset.builder()
                 .assetTag("AF-0003")
                 .name("Conference Room Projector")
-                .categoryId(electronics.getId())
+                .category(electronics)
                 .serialNumber("PROJ-2026-001")
                 .acquisitionDate(LocalDate.of(2026, 3, 10))
                 .cost(new BigDecimal("1299.00"))
@@ -120,13 +120,13 @@ public class DataSeeder implements CommandLineRunner {
                 .location("Conference Room A")
                 .isBookable(true)
                 .lifecycleState(LifecycleState.AVAILABLE)
-                .registeredBy(admin.getId())
+                .registeredBy(admin)
                 .build());
 
         assetRepository.save(Asset.builder()
                 .assetTag("AF-0004")
                 .name("Toyota HiAce Van")
-                .categoryId(vehicles.getId())
+                .category(vehicles)
                 .serialNumber("VEH-2026-001")
                 .acquisitionDate(LocalDate.of(2026, 1, 5))
                 .cost(new BigDecimal("35000.00"))
@@ -134,13 +134,13 @@ public class DataSeeder implements CommandLineRunner {
                 .location("Parking Lot B")
                 .isBookable(true)
                 .lifecycleState(LifecycleState.AVAILABLE)
-                .registeredBy(admin.getId())
+                .registeredBy(admin)
                 .build());
 
         assetRepository.save(Asset.builder()
                 .assetTag("AF-0005")
                 .name("Dell Monitor 27\" 4K")
-                .categoryId(electronics.getId())
+                .category(electronics)
                 .serialNumber("MON-2026-001")
                 .acquisitionDate(LocalDate.of(2026, 4, 20))
                 .cost(new BigDecimal("549.00"))
@@ -148,7 +148,7 @@ public class DataSeeder implements CommandLineRunner {
                 .location("IT Storage")
                 .isBookable(false)
                 .lifecycleState(LifecycleState.AVAILABLE)
-                .registeredBy(admin.getId())
+                .registeredBy(admin)
                 .build());
 
         log.info("Data seeding completed! Admin: admin@assetflow.com / admin123");
