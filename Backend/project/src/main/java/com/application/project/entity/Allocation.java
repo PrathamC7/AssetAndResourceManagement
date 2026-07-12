@@ -1,35 +1,49 @@
 package com.application.project.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// "This asset is currently held by this person." isActive=true means it's
+// the CURRENT holder; on return, don't delete the row — set isActive=false
+// and fill actualReturnDate, so this table doubles as its own history.
+// This is the entity behind the double-allocation conflict check (the
+// "Priya/Raj" demo scenario).
 @Entity
 @Table(name = "allocations")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Allocation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "asset_id", nullable = false)
-    private Long assetId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "asset_id", nullable = false)
+    private Asset asset;
 
-    @Column(name = "assigned_to", nullable = false)
-    private Long assignedTo;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "assigned_to", nullable = false)
+    private User assignedTo;
 
-    @Column(name = "allocated_by", nullable = false)
-    private Long allocatedBy;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "allocated_by", nullable = false)
+    private User allocatedBy;
 
-    @Column(name = "expected_return_date", nullable = false)
+    // Nullable — supports permanent/open-ended allocations per the PDF spec.
+    @Column(name = "expected_return_date")
     private LocalDate expectedReturnDate;
 
     @Column(name = "actual_return_date")
@@ -53,4 +67,9 @@ public class Allocation {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Optimistic locking — guards against two concurrent allocation attempts
+    // on the same asset racing past the "is it Available?" check.
+    @Version
+    private Long version;
 }

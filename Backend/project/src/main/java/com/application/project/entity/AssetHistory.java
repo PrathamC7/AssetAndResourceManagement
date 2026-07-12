@@ -1,45 +1,56 @@
 package com.application.project.entity;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.application.project.enums.HistoryEventType;
 import com.application.project.enums.LifecycleState;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+// Append-only audit trail for an asset's lifecycle. Never update or delete a
+// row here — every service method that changes Asset.lifecycleState should
+// insert exactly one AssetHistory row in the same transaction.
 @Entity
 @Table(name = "asset_history")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AssetHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "asset_id", nullable = false)
-    private Long assetId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "asset_id", nullable = false)
+    private Asset asset;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "event_type", nullable = false)
+    @Column(name = "event_type", nullable = false, length = 30)
     private HistoryEventType eventType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "previous_state")
+    @Column(name = "previous_state", length = 30)
     private LifecycleState previousState;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "new_state")
+    @Column(name = "new_state", length = 30)
     private LifecycleState newState;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "performed_by", nullable = false)
-    private Long performedBy;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "performed_by", nullable = false)
+    private User performedBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

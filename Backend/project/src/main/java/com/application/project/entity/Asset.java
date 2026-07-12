@@ -1,35 +1,47 @@
 package com.application.project.entity;
 
-import com.application.project.enums.LifecycleState;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.application.project.enums.LifecycleState;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// The hub entity of the whole schema — Allocation, Transfer, ResourceBooking,
+// MaintenanceRequest, AuditAssignment, and AssetHistory all point back here.
+// `lifecycleState` is the single most important field in the system: every
+// other module reads or mutates it under its own rules.
 @Entity
 @Table(name = "assets")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Asset {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Auto-generated in the service layer (format AF-0001), not by the DB.
     @Column(name = "asset_tag", nullable = false, unique = true, length = 10)
     private String assetTag;
 
     @Column(nullable = false, length = 200)
     private String name;
 
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private AssetCategory category;
 
     @Column(name = "serial_number", nullable = false, unique = true, length = 100)
     private String serialNumber;
@@ -56,15 +68,17 @@ public class Asset {
     private Boolean isBookable = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "lifecycle_state", nullable = false)
+    @Column(name = "lifecycle_state", nullable = false, length = 30)
     @Builder.Default
     private LifecycleState lifecycleState = LifecycleState.AVAILABLE;
 
-    @Column(name = "custom_fields", columnDefinition = "TEXT")
+    // Cut from MVP scope alongside CategoryCustomField — leave null/unused.
+    @Column(name = "custom_fields", columnDefinition = "JSON")
     private String customFields;
 
-    @Column(name = "registered_by", nullable = false)
-    private Long registeredBy;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "registered_by", nullable = false)
+    private User registeredBy;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
