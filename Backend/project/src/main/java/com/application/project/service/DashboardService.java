@@ -9,6 +9,8 @@ import com.application.project.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -21,6 +23,36 @@ public class DashboardService {
     private final AuditCycleRepository auditCycleRepository;
 
     public DashboardSummaryResponse getSummary() {
+        CompletableFuture<Long> totalFuture = CompletableFuture.supplyAsync(assetRepository::count);
+        CompletableFuture<Long> availFuture = CompletableFuture.supplyAsync(() -> assetRepository.countByLifecycleState(LifecycleState.AVAILABLE));
+        CompletableFuture<Long> allocFuture = CompletableFuture.supplyAsync(() -> assetRepository.countByLifecycleState(LifecycleState.ALLOCATED));
+        CompletableFuture<Long> maintFuture = CompletableFuture.supplyAsync(() -> assetRepository.countByLifecycleState(LifecycleState.UNDER_MAINTENANCE));
+        CompletableFuture<Long> bookingUpFuture = CompletableFuture.supplyAsync(() -> bookingRepository.countByStatus(BookingStatus.UPCOMING));
+        CompletableFuture<Long> bookingOnFuture = CompletableFuture.supplyAsync(() -> bookingRepository.countByStatus(BookingStatus.ONGOING));
+        CompletableFuture<Long> transferFuture = CompletableFuture.supplyAsync(() -> transferRepository.countByStatus(TransferStatus.REQUESTED));
+        CompletableFuture<Long> overdueFuture = CompletableFuture.supplyAsync(allocationRepository::countByIsOverdueTrue);
+        CompletableFuture<Long> maintenanceFuture = CompletableFuture.supplyAsync(() -> maintenanceRepository.countByStatus(
+                com.application.project.enums.MaintenanceStatus.PENDING));
+        CompletableFuture<Long> auditFuture = CompletableFuture.supplyAsync(() -> auditCycleRepository.countByStatus(AuditStatus.OPEN));
+
+        try {
+            return DashboardSummaryResponse.builder()
+                    .totalAssets(totalFuture.get())
+                    .assetsAvailable(availFuture.get())
+                    .assetsAllocated(allocFuture.get())
+                    .assetsUnderMaintenance(maintFuture.get())
+                    .activeBookings(bookingUpFuture.get() + bookingOnFuture.get())
+                    .pendingTransfers(transferFuture.get())
+                    .overdueReturns(overdueFuture.get())
+                    .pendingMaintenanceRequests(maintenanceFuture.get())
+                    .openAuditCycles(auditFuture.get())
+                    .build();
+        } catch (Exception e) {
+            return getSummarySequential();
+        }
+    }
+
+    private DashboardSummaryResponse getSummarySequential() {
         return DashboardSummaryResponse.builder()
                 .totalAssets(assetRepository.count())
                 .assetsAvailable(assetRepository.countByLifecycleState(LifecycleState.AVAILABLE))
@@ -32,7 +64,7 @@ public class DashboardService {
                 .overdueReturns(allocationRepository.countByIsOverdueTrue())
                 .pendingMaintenanceRequests(maintenanceRepository.countByStatus(
                         com.application.project.enums.MaintenanceStatus.PENDING))
-                .openAuditCycles(auditCycleRepository.findByStatus(AuditStatus.OPEN).size())
+                .openAuditCycles(auditCycleRepository.countByStatus(AuditStatus.OPEN))
                 .build();
     }
 }
