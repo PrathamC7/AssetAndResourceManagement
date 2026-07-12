@@ -18,7 +18,7 @@ export function LoginScreen({ onNavigate, user, onAction }) {
         
         {/* Logo Branding */}
         <div className="flex justify-center mb-6">
-          <img src="/logo_full.png" alt="AssetFlow Logo" className="h-28 w-auto object-contain" />
+          <img src="/logo_full.png" alt="AssetFlow Logo" className="h-36 w-auto object-contain" />
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
