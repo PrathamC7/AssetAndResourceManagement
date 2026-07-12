@@ -182,7 +182,7 @@ function App() {
           user ? (
             <Navigate to="/dashboard" replace />
           ) : (
-            <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center px-4 relative overflow-hidden">
+            <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center px-4 py-8 relative overflow-y-auto w-full">
               <LoginScreen 
                 onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} 
                 user={user} 

@@ -14,14 +14,14 @@ export function LoginScreen({ onNavigate, user, onAction }) {
   return (
     <div className="w-full max-w-[480px] mx-auto p-6">
       {/* Login Card */}
-      <div className="bg-white border border-slate-200 p-8 rounded-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.04)] flex flex-col text-slate-800">
+      <div className="bg-white border border-slate-200 p-6 rounded-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.04)] flex flex-col text-slate-800">
         
         {/* Logo Branding */}
-        <div className="flex justify-center mb-6">
-          <img src="/logo_full.png" alt="AssetFlow Logo" className="h-36 w-auto object-contain" />
+        <div className="flex justify-center mb-3">
+          <img src="/logo_full.png" alt="AssetFlow Logo" className="h-28 w-auto object-contain" />
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="space-y-3.5" onSubmit={handleSubmit}>
           {/* Email input */}
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-700 block" htmlFor="email">
@@ -59,14 +59,14 @@ export function LoginScreen({ onNavigate, user, onAction }) {
             </div>
           </div>
 
-          <hr className="border-slate-200 my-4" />
+          <hr className="border-slate-200 my-2.5" />
 
           {/* New Here info box */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="text-xs text-slate-500 font-medium">
               New here?
             </div>
-            <div className="w-full border border-slate-300 rounded-lg p-3 text-xs text-slate-600 bg-slate-50/50 leading-relaxed">
+            <div className="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs text-slate-600 bg-slate-50/50 leading-relaxed">
               Sign up creates an employee account admin roles assigned later
             </div>
 
