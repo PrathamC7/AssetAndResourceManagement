@@ -17,8 +17,32 @@ function App() {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [notifications, setNotifications] = useState([]);
   
   const navigate = useNavigate();
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('/api/v1/notifications', {
+          headers: { 'Authorization': `Bearer ${user?.token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    };
+
+    if (user?.token) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   // Force document to Light Mode always and prevent color-scheme inverting
   useEffect(() => {
@@ -28,29 +52,84 @@ function App() {
     root.style.colorScheme = 'light';
   }, []);
 
-  // Authenticate user with mock administrator data
-  const handleLogin = (email, password) => {
-    const mockUser = {
-      name: 'Alex Henderson',
-      email: email || 'alex@company.com',
-      role: 'ADMIN',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6igkTBhqNxW9N82gJubEHeLUssuqLzY0gP1WlRQs_cqzXL5tAONze_79-_3fkGbQy4gVxkhXmb9RC42RMOddTH_gz7WAMVA8OQ-wrPE9JfZcch7jewM9V9_nx9Ozc9YOGDZ7E6UT6-3xcrrh99bImQEJI9Ar5hVHDmdwMQpeWV6bMUN5osRmEeSKYVIEk64KFOWUcmo5-mkvfdMKPIZ8rkPOwIHdN6GO5whaDNPX634ThTZ2b3-6dKg'
-    };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    navigate('/dashboard');
+  // Authenticate user with backend JWT login
+  const handleLogin = async (email, password) => {
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const apiResponse = await response.json();
+      if (!response.ok) {
+        throw new Error(apiResponse.message || 'Authentication failed');
+      }
+
+      const authData = apiResponse.data;
+      const loggedUser = {
+        name: authData.name,
+        email: authData.email,
+        role: authData.role,
+        token: authData.token,
+        userId: authData.userId,
+        avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6igkTBhqNxW9N82gJubEHeLUssuqLzY0gP1WlRQs_cqzXL5tAONze_79-_3fkGbQy4gVxkhXmb9RC42RMOddTH_gz7WAMVA8OQ-wrPE9JfZcch7jewM9V9_nx9Ozc9YOGDZ7E6UT6-3xcrrh99bImQEJI9Ar5hVHDmdwMQpeWV6bMUN5osRmEeSKYVIEk64KFOWUcmo5-mkvfdMKPIZ8rkPOwIHdN6GO5whaDNPX634ThTZ2b3-6dKg'
+      };
+
+      setUser(loggedUser);
+      localStorage.setItem('user', JSON.stringify(loggedUser));
+      localStorage.setItem('token', authData.token);
+      navigate('/dashboard');
+    } catch (err) {
+      alert(`Login failed: ${err.message}`);
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const handleSignup = async (name, email, password) => {
+    try {
+      const response = await fetch('/api/v1/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      
+      const apiResponse = await response.json();
+      if (!response.ok) {
+        throw new Error(apiResponse.message || 'Signup failed');
+      }
+
+      const authData = apiResponse.data;
+      const loggedUser = {
+        name: authData.name,
+        email: authData.email,
+        role: authData.role,
+        token: authData.token,
+        userId: authData.userId,
+        avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6igkTBhqNxW9N82gJubEHeLUssuqLzY0gP1WlRQs_cqzXL5tAONze_79-_3fkGbQy4gVxkhXmb9RC42RMOddTH_gz7WAMVA8OQ-wrPE9JfZcch7jewM9V9_nx9Ozc9YOGDZ7E6UT6-3xcrrh99bImQEJI9Ar5hVHDmdwMQpeWV6bMUN5osRmEeSKYVIEk64KFOWUcmo5-mkvfdMKPIZ8rkPOwIHdN6GO5whaDNPX634ThTZ2b3-6dKg'
+      };
+
+      setUser(loggedUser);
+      localStorage.setItem('user', JSON.stringify(loggedUser));
+      localStorage.setItem('token', authData.token);
+      navigate('/dashboard');
+    } catch (err) {
+      alert(`Signup failed: ${err.message}`);
+    }
   };
 
   const handleAction = (actionType, event) => {
     console.log(`Action: ${actionType}`, event);
     if (actionType === 'submit') {
-      handleLogin();
+      handleLogin(event.email, event.password);
+    } else if (actionType === 'signup') {
+      handleSignup(event.name, event.email, event.password);
     }
   };
 
@@ -152,9 +231,14 @@ function App() {
             
             {/* Header Right Icons */}
             <div className="flex items-center gap-3">
-              <button className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full relative">
+              <button 
+                onClick={() => navigate('/notifications')}
+                className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full relative cursor-pointer"
+              >
                 <span className="material-symbols-outlined">notifications</span>
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
+                {notifications.filter(n => !n.isRead).length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
+                )}
               </button>
               <button className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full">
                 <span className="material-symbols-outlined">help_outline</span>
@@ -206,7 +290,7 @@ function App() {
         <Route path="maintenance" element={<MaintenanceScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
         <Route path="audit" element={<AuditScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
         <Route path="reports" element={<ReportsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
-        <Route path="notifications" element={<ActivityLogsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} />} />
+        <Route path="notifications" element={<ActivityLogsScreen onNavigate={(tab) => navigate(`/${tab.replace('_', '-')}`)} user={user} onAction={handleAction} notifications={notifications} setNotifications={setNotifications} />} />
       </Route>
 
       {/* Fallback route */}

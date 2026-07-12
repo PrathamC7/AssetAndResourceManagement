@@ -10,6 +10,8 @@ import com.application.project.repository.AssetCategoryRepository;
 import com.application.project.repository.AssetRepository;
 import com.application.project.repository.DepartmentRepository;
 import com.application.project.repository.UserRepository;
+import com.application.project.entity.Notification;
+import com.application.project.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -28,10 +30,33 @@ public class DataSeeder implements CommandLineRunner {
     private final DepartmentRepository departmentRepository;
     private final AssetCategoryRepository categoryRepository;
     private final AssetRepository assetRepository;
+    private final NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
+        if (notificationRepository.count() == 0) {
+            User admin = userRepository.findByEmail("admin@assetflow.com").orElse(null);
+            if (admin != null) {
+                notificationRepository.save(Notification.builder()
+                        .user(admin)
+                        .title("New Asset Assigned")
+                        .message("Standing Desk - Uplift V2 (AF-0002) has been registered and assigned to Floor 3 - Bay A.")
+                        .type("ASSET_ASSIGNED")
+                        .isRead(false)
+                        .build());
+
+                notificationRepository.save(Notification.builder()
+                        .user(admin)
+                        .title("Conference Room Booking Confirmed")
+                        .message("Your booking for Conference Room Projector (AF-0003) is confirmed for 2:00 PM - 3:00 PM.")
+                        .type("BOOKING_CONFIRMED")
+                        .isRead(false)
+                        .build());
+                log.info("Seeded initial notifications for admin user!");
+            }
+        }
+
         if (userRepository.existsByEmail("admin@assetflow.com")) {
             log.info("Data already seeded, skipping...");
             return;

@@ -1,0 +1,44 @@
+# ==============================
+# AssetFlow - Application Configuration
+# ==============================
+
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://tokaido.proxy.rlwy.net:24069/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: WEYVmtvcNccZxnFQRmxsDAsVAaJuyxbA
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# ==============================
+# JWT Configuration
+# ==============================
+jwt:
+  secret: 4a6f686e446f654a57545369676e696e674b6579466f724173736574466c6f77417070326f323653656375726531323334353637383930
+  expiration: 86400000
+
+# ==============================
+# Logging
+# ==============================
+logging:
+  level:
+    root: INFO
+    com.application.project: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

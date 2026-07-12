@@ -1,26 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export function DashboardScreen({ onNavigate, user, onAction }) {
-  const kpis = [
-    { label: 'Available', value: 128 },
-    { label: 'Allocated', value: 76 },
-    { label: 'Available', value: 4 },
-    { label: 'Active Bookings', value: 9 },
-    { label: 'Pending Transfers', value: 3 },
-    { label: 'Upcoming returns', value: 12 }
-  ];
+  const [summary, setSummary] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const recentActivity = [
-    'Laptop AF-0114 - allocated to Priya shah - IT dept',
-    'Room B2 - booking confirmed - 2:00 to 3:00 PM',
-    'Projector AF-0062 - maintenance resolved'
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Fetch dashboard summary
+        const summaryRes = await fetch('/api/v1/dashboard/summary', {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!summaryRes.ok) {
+          throw new Error('Failed to fetch dashboard summary');
+        }
+        const summaryData = await summaryRes.json();
+        setSummary(summaryData.data);
+
+        // Fetch recent activity logs
+        const logsRes = await fetch('/api/v1/activity-logs?size=5', {
+          headers: {
+            'Authorization': `Bearer ${user?.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (logsRes.ok) {
+          const logsData = await logsRes.json();
+          setActivities(logsData.data.content || []);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.token) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-500 font-medium">Loading today's overview...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-[12px] p-6 text-sm text-red-600 font-semibold max-w-lg mx-auto mt-10">
+        <h3 className="text-base font-bold mb-2">Error Loading Dashboard</h3>
+        <p>{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs transition-colors cursor-pointer"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const kpis = [
+    { label: 'Available Assets', value: summary?.assetsAvailable ?? 0 },
+    { label: 'Allocated Assets', value: summary?.assetsAllocated ?? 0 },
+    { label: 'Under Maintenance', value: summary?.assetsUnderMaintenance ?? 0 },
+    { label: 'Active Bookings', value: summary?.activeBookings ?? 0 },
+    { label: 'Pending Transfers', value: summary?.pendingTransfers ?? 0 },
+    { label: 'Overdue Returns', value: summary?.overdueReturns ?? 0 }
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl w-full">
+    <div className="space-y-6 max-w-6xl w-full pb-24">
       {/* Title */}
       <h2 className="text-xl font-bold text-slate-900 mb-6">Today's Overview</h2>
-
+ 
       {/* Grid: 6 KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {kpis.map((kpi, idx) => (
@@ -32,9 +95,11 @@ export function DashboardScreen({ onNavigate, user, onAction }) {
       </div>
 
       {/* Overdue alert */}
-      <div className="bg-red-50 border border-red-200 rounded-[12px] p-4 text-sm text-red-600 font-semibold">
-        3 assets overdue for return - flagged for follow-up
-      </div>
+      {summary?.overdueReturns > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-[12px] p-4 text-sm text-red-600 font-semibold">
+          {summary.overdueReturns} assets overdue for return - flagged for follow-up
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4 pt-2">
@@ -62,11 +127,19 @@ export function DashboardScreen({ onNavigate, user, onAction }) {
       <div className="pt-6 border-t border-slate-200 space-y-4">
         <h3 className="text-lg font-bold text-slate-900">Recent Activity</h3>
         <ul className="space-y-3">
-          {recentActivity.map((activity, idx) => (
-            <li key={idx} className="text-sm text-slate-600 font-medium list-disc ml-5 leading-relaxed">
-              {activity}
-            </li>
-          ))}
+          {activities.length > 0 ? (
+            activities.map((activity) => (
+              <li key={activity.id} className="text-sm text-slate-600 font-medium list-disc ml-5 leading-relaxed">
+                <span className="font-bold text-slate-850">{activity.user?.name || 'System'}</span>:{' '}
+                {activity.details || activity.action}{' '}
+                <span className="text-xs text-slate-400 font-normal">
+                  ({new Date(activity.createdAt).toLocaleString()})
+                </span>
+              </li>
+            ))
+          ) : (
+            <li className="text-sm text-slate-450 italic ml-5">No recent activities logged yet.</li>
+          )}
         </ul>
       </div>
     </div>
