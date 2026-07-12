@@ -13,6 +13,131 @@ import { ActivityLogsScreen } from './components/ActivityLogsScreen';
 import { login as apiLogin, signup as apiSignup, getNotifications as apiGetNotifications } from './services/api';
 import './App.css';
 
+// Layout wrapper component containing Sidebar, Header, and Outlet
+function MainLayout({ user, notifications, handleLogout }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    user?.role === 'ADMIN' && { path: '/org-setup', label: 'Organization setup', icon: 'settings_suggest' },
+    { path: '/assets', label: 'Assets', icon: 'inventory_2' },
+    { path: '/allocation', label: 'Allocation & Transfer', icon: 'assignment_ind' },
+    { path: '/booking', label: 'Resource Booking', icon: 'event_available' },
+    { path: '/maintenance', label: 'Maintenance', icon: 'build' },
+    { path: '/audit', label: 'Audit', icon: 'fact_check' },
+    { path: '/reports', label: 'Reports', icon: 'analytics' },
+    { path: '/notifications', label: 'Notifications', icon: 'notifications' }
+  ].filter(Boolean);
+
+  // Redirect to login if user session is null
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-white text-slate-800 font-sans">
+      
+      {/* Side Navigation (Clean Premium White sidebar with Slate borders) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white text-slate-700 flex flex-col py-4 px-5 transition-transform duration-300 transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200`}>
+        
+        {/* Branding */}
+        <div className="mb-4 pb-4 border-b border-slate-200 flex justify-center">
+          <img src="/logo_horizontal.png" alt="AssetFlow Logo" className="h-11 w-auto mx-auto object-contain" />
+        </div>
+
+        {/* Links */}
+        <nav className="flex-grow space-y-0.5 overflow-y-auto pr-1">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all text-left ${isActive ? 'bg-slate-100 text-slate-950 font-bold border-l-4 border-slate-950' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User Card */}
+        <div className="mt-auto pt-4 border-t border-slate-200 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+              <img className="w-full h-full object-cover" src={user.avatarUrl} alt="User Profile" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
+              <p className="text-xs text-slate-500 truncate">{user.role}</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleLogout} 
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors text-xs font-semibold"
+          >
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Panel */}
+      <div className="flex-grow flex flex-col h-full overflow-hidden bg-white">
+        
+        {/* Header */}
+        <header className="bg-white flex items-center justify-between px-10 h-20 w-full border-b border-slate-200 shadow-sm shrink-0">
+          <div className="flex items-center gap-4 flex-1">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg md:hidden"
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
+            <div className="relative w-full max-w-md hidden sm:block">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input 
+                className="w-full pl-12 pr-4 py-2 bg-slate-100 border border-slate-200 focus:border-slate-300 focus:bg-white rounded-lg text-sm transition-all text-slate-900 placeholder-slate-400 outline-none" 
+                placeholder="Global Search..." 
+                type="text"
+              />
+            </div>
+          </div>
+          
+          {/* Header Right Icons */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/notifications')}
+              className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full relative cursor-pointer"
+            >
+              <span className="material-symbols-outlined">notifications</span>
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
+              )}
+            </button>
+            <button className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full">
+              <span className="material-symbols-outlined">help_outline</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Dynamic Inner Page Screen using Outlet */}
+        <main className="flex-grow overflow-y-auto p-8 pb-16 relative flex justify-center">
+          <div className="max-w-6xl w-full mx-auto pb-16">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
@@ -137,130 +262,6 @@ function App() {
     }
   };
 
-  // Layout wrapper component containing Sidebar, Header, and Outlet
-  function MainLayout() {
-    const location = useLocation();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const navItems = [
-      { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-      user?.role === 'ADMIN' && { path: '/org-setup', label: 'Organization setup', icon: 'settings_suggest' },
-      { path: '/assets', label: 'Assets', icon: 'inventory_2' },
-      { path: '/allocation', label: 'Allocation & Transfer', icon: 'assignment_ind' },
-      { path: '/booking', label: 'Resource Booking', icon: 'event_available' },
-      { path: '/maintenance', label: 'Maintenance', icon: 'build' },
-      { path: '/audit', label: 'Audit', icon: 'fact_check' },
-      { path: '/reports', label: 'Reports', icon: 'analytics' },
-      { path: '/notifications', label: 'Notifications', icon: 'notifications' }
-    ].filter(Boolean);
-
-    // Redirect to login if user session is null
-    if (!user) {
-      return <Navigate to="/login" replace />;
-    }
-
-    return (
-      <div className="flex h-screen w-screen overflow-hidden bg-white text-slate-800 font-sans">
-        
-        {/* Side Navigation (Clean Premium White sidebar with Slate borders) */}
-        <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white text-slate-700 flex flex-col py-4 px-5 transition-transform duration-300 transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200`}>
-          
-          {/* Branding */}
-          <div className="mb-4 pb-4 border-b border-slate-200 flex justify-center">
-            <img src="/logo_horizontal.png" alt="AssetFlow Logo" className="h-11 w-auto mx-auto object-contain" />
-          </div>
-
-          {/* Links */}
-          <nav className="flex-grow space-y-0.5 overflow-y-auto pr-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setIsSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all text-left ${isActive ? 'bg-slate-100 text-slate-950 font-bold border-l-4 border-slate-950' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
-                >
-                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* User Card */}
-          <div className="mt-auto pt-4 border-t border-slate-200 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
-                <img className="w-full h-full object-cover" src={user.avatarUrl} alt="User Profile" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.role}</p>
-              </div>
-            </div>
-            <button 
-              onClick={handleLogout} 
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors text-xs font-semibold"
-            >
-              <span className="material-symbols-outlined text-[16px]">logout</span>
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Panel */}
-        <div className="flex-grow flex flex-col h-full overflow-hidden bg-white">
-          
-          {/* Header */}
-          <header className="bg-white flex items-center justify-between px-10 h-20 w-full border-b border-slate-200 shadow-sm shrink-0">
-            <div className="flex items-center gap-4 flex-1">
-              <button 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg md:hidden"
-              >
-                <span className="material-symbols-outlined">menu</span>
-              </button>
-              <div className="relative w-full max-w-md hidden sm:block">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                <input 
-                  className="w-full pl-12 pr-4 py-2 bg-slate-100 border border-slate-200 focus:border-slate-300 focus:bg-white rounded-lg text-sm transition-all text-slate-900 placeholder-slate-400 outline-none" 
-                  placeholder="Global Search..." 
-                  type="text"
-                />
-              </div>
-            </div>
-            
-            {/* Header Right Icons */}
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => navigate('/notifications')}
-                className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full relative cursor-pointer"
-              >
-                <span className="material-symbols-outlined">notifications</span>
-                {notifications.filter(n => !n.isRead).length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
-                )}
-              </button>
-              <button className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all rounded-full">
-                <span className="material-symbols-outlined">help_outline</span>
-              </button>
-            </div>
-          </header>
-
-          {/* Dynamic Inner Page Screen using Outlet */}
-          <main className="flex-grow overflow-y-auto p-8 pb-16 relative flex justify-center">
-            <div className="max-w-6xl w-full mx-auto pb-16">
-              <Outlet />
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Routes>
       {/* Public Login Route */}
@@ -282,7 +283,7 @@ function App() {
       />
 
       {/* Main Layout containing Children Outlets */}
-      <Route path="/" element={<MainLayout />}>
+      <Route path="/" element={<MainLayout user={user} notifications={notifications} handleLogout={handleLogout} />}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         
         {/* Outlet Pages */}
