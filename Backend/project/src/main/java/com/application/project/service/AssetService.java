@@ -140,6 +140,31 @@ public class AssetService {
                 .orElse("AF-0001");
     }
 
+    public Page<com.application.project.dto.AssetHistoryResponse> getHistory(Long assetId, Pageable pageable) {
+        if (!assetRepository.existsById(assetId)) {
+            throw new ResourceNotFoundException("Asset not found");
+        }
+        return historyRepository.findByAssetIdOrderByCreatedAtDesc(assetId, pageable)
+                .map(this::toHistoryResponse);
+    }
+
+    private com.application.project.dto.AssetHistoryResponse toHistoryResponse(AssetHistory history) {
+        String userName = history.getPerformedBy() != null ? history.getPerformedBy().getName() : "System";
+        Long userId = history.getPerformedBy() != null ? history.getPerformedBy().getId() : null;
+
+        return com.application.project.dto.AssetHistoryResponse.builder()
+                .id(history.getId())
+                .assetId(history.getAsset() != null ? history.getAsset().getId() : null)
+                .eventType(history.getEventType().name())
+                .previousState(history.getPreviousState() != null ? history.getPreviousState().name() : null)
+                .newState(history.getNewState() != null ? history.getNewState().name() : null)
+                .description(history.getDescription())
+                .performedBy(userId)
+                .performedByName(userName)
+                .createdAt(history.getCreatedAt())
+                .build();
+    }
+
     private AssetResponse toResponse(Asset asset) {
         String categoryName = asset.getCategory() != null ? asset.getCategory().getName() : "Unknown";
 

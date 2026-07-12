@@ -46,4 +46,13 @@ public class AssetController {
     public ResponseEntity<ApiResponse<AssetResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(assetService.getById(id)));
     }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<ApiResponse<Page<com.application.project.dto.AssetHistoryResponse>>> getHistory(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<com.application.project.dto.AssetHistoryResponse> history = assetService.getHistory(id, PageRequest.of(page, size));
+        return ResponseEntity.ok(ApiResponse.ok(history));
+    }
 }

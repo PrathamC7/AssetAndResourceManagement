@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { getAssets, getBookings, createBooking, cancelBooking } from '../services/api';
 
 export function BookingScreen({ onNavigate, user, onAction }) {
   const [resources, setResources] = useState([]);
@@ -25,16 +26,8 @@ export function BookingScreen({ onNavigate, user, onAction }) {
     const fetchResources = async () => {
       try {
         setLoadingResources(true);
-        const res = await fetch('/api/v1/assets?size=100', {
-          headers: {
-            'Authorization': `Bearer ${user?.token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (!res.ok) throw new Error('Failed to load resources');
-        
-        const apiRes = await res.json();
-        const content = apiRes.data.content || [];
+        const res = await getAssets({ size: 100 });
+        const content = res.data.data?.content || [];
         // Filter assets that are marked as bookable
         const bookables = content.filter(asset => asset.isBookable);
         setResources(bookables);
@@ -44,7 +37,7 @@ export function BookingScreen({ onNavigate, user, onAction }) {
           setSelectedResourceId(bookables[0].id.toString());
         }
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message);
       } finally {
         setLoadingResources(false);
       }
@@ -60,16 +53,8 @@ export function BookingScreen({ onNavigate, user, onAction }) {
     if (!selectedResourceId) return;
     try {
       setLoadingBookings(true);
-      const res = await fetch(`/api/v1/bookings?assetId=${selectedResourceId}`, {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!res.ok) throw new Error('Failed to load bookings');
-      
-      const apiRes = await res.json();
-      setBookings(apiRes.data || []);
+      const res = await getBookings({ assetId: selectedResourceId });
+      setBookings(res.data.data || []);
     } catch (err) {
       console.error('Error fetching bookings:', err);
     } finally {
@@ -88,23 +73,11 @@ export function BookingScreen({ onNavigate, user, onAction }) {
     if (!window.confirm('Are you sure you want to cancel this booking slot?')) return;
     
     try {
-      const res = await fetch(`/api/v1/bookings/${bookingId}/cancel`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const apiRes = await res.json();
-      if (!res.ok) {
-        throw new Error(apiRes.message || 'Cancellation failed');
-      }
-      
+      await cancelBooking(bookingId);
       alert('Booking cancelled successfully!');
       fetchBookings();
     } catch (err) {
-      alert(`Error cancelling booking: ${err.message}`);
+      alert(`Error cancelling booking: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -134,19 +107,7 @@ export function BookingScreen({ onNavigate, user, onAction }) {
         notes: formData.notes
       };
 
-      const res = await fetch('/api/v1/bookings', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const apiRes = await res.json();
-      if (!res.ok) {
-        throw new Error(apiRes.message || 'Overlapping or invalid slot');
-      }
+      await createBooking(payload);
 
       alert('Resource booked successfully!');
       setShowModal(false);
@@ -161,7 +122,7 @@ export function BookingScreen({ onNavigate, user, onAction }) {
       });
       fetchBookings();
     } catch (err) {
-      alert(`Booking conflict: ${err.message}`);
+      alert(`Booking conflict: ${err.response?.data?.message || err.message}`);
     } finally {
       setBookingInProgress(false);
     }
@@ -182,7 +143,7 @@ export function BookingScreen({ onNavigate, user, onAction }) {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl w-full text-slate-800 pb-24">
+    <div className="space-y-6 max-w-4xl w-full text-slate-800">
       
       {/* Resource selector */}
       <div className="space-y-1.5 max-w-md">

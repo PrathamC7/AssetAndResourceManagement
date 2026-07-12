@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { getAuditCycles, getAuditCycleById, createAuditCycle, closeAuditCycle, assignAuditAsset, updateAuditAssignment, getAssets, getUsers } from '../services/api';
 
 export function AuditScreen({ onNavigate, user, onAction }) {
   const [cycles, setCycles] = useState([]);
@@ -39,16 +40,8 @@ export function AuditScreen({ onNavigate, user, onAction }) {
   const fetchCycles = async (selectId = null) => {
     try {
       setLoadingCycles(true);
-      const res = await fetch('/api/v1/audit-cycles', {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!res.ok) throw new Error('Failed to load audit cycles');
-      
-      const apiRes = await res.json();
-      const list = apiRes.data || [];
+      const res = await getAuditCycles();
+      const list = res.data.data || [];
       setCycles(list);
       
       if (selectId) {
@@ -68,16 +61,8 @@ export function AuditScreen({ onNavigate, user, onAction }) {
     if (!selectedCycleId) return;
     try {
       setLoadingDetails(true);
-      const res = await fetch(`/api/v1/audit-cycles/${selectedCycleId}`, {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!res.ok) throw new Error('Failed to load audit cycle details');
-      
-      const apiRes = await res.json();
-      setCycleDetails(apiRes.data);
+      const res = await getAuditCycleById(selectedCycleId);
+      setCycleDetails(res.data.data);
     } catch (err) {
       console.error('Error fetching details:', err);
     } finally {
@@ -88,23 +73,11 @@ export function AuditScreen({ onNavigate, user, onAction }) {
   // Fetch supporting lists for assignment dropdowns
   const fetchAssignmentData = async () => {
     try {
-      // Assets
-      const assetsRes = await fetch('/api/v1/assets?size=100', {
-        headers: { 'Authorization': `Bearer ${user?.token}` }
-      });
-      if (assetsRes.ok) {
-        const data = await assetsRes.json();
-        setAssets(data.data.content || []);
-      }
+      const assetsRes = await getAssets({ size: 100 });
+      if (assetsRes.data?.data?.content) setAssets(assetsRes.data.data.content);
       
-      // Users/Auditors
-      const usersRes = await fetch('/api/v1/users?size=100', {
-        headers: { 'Authorization': `Bearer ${user?.token}` }
-      });
-      if (usersRes.ok) {
-        const data = await usersRes.json();
-        setAuditors(data.data.content || []);
-      }
+      const usersRes = await getUsers({ size: 100 });
+      if (usersRes.data?.data?.content) setAuditors(usersRes.data.data.content);
     } catch (err) {
       console.error('Error fetching assignment datasets:', err);
     }
@@ -135,29 +108,19 @@ export function AuditScreen({ onNavigate, user, onAction }) {
 
     try {
       setSubmitting(true);
-      const res = await fetch('/api/v1/audit-cycles', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: createForm.name,
-          description: createForm.description,
-          startDate: createForm.startDate,
-          endDate: createForm.endDate || null
-        })
+      const res = await createAuditCycle({
+        name: createForm.name,
+        description: createForm.description,
+        startDate: createForm.startDate,
+        endDate: createForm.endDate || null
       });
-
-      const apiRes = await res.json();
-      if (!res.ok) throw new Error(apiRes.message || 'Creation failed');
 
       alert('Audit cycle created successfully!');
       setShowCreateModal(false);
       setCreateForm({ name: '', description: '', startDate: new Date().toISOString().split('T')[0], endDate: '' });
-      fetchCycles(apiRes.data.id);
+      fetchCycles(res.data.data?.id);
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(`Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -170,27 +133,17 @@ export function AuditScreen({ onNavigate, user, onAction }) {
 
     try {
       setSubmitting(true);
-      const res = await fetch(`/api/v1/audit-cycles/${selectedCycleId}/assignments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          assetId: parseInt(assignForm.assetId, 10),
-          auditorId: parseInt(assignForm.auditorId, 10)
-        })
+      await assignAuditAsset(selectedCycleId, {
+        assetId: parseInt(assignForm.assetId, 10),
+        auditorId: parseInt(assignForm.auditorId, 10)
       });
-
-      const apiRes = await res.json();
-      if (!res.ok) throw new Error(apiRes.message || 'Assignment failed');
 
       alert('Asset assigned to checklist successfully!');
       setShowAssignModal(false);
       setAssignForm({ assetId: '', auditorId: '' });
       fetchCycleDetails();
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(`Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -203,20 +156,10 @@ export function AuditScreen({ onNavigate, user, onAction }) {
 
     try {
       setSubmitting(true);
-      const res = await fetch(`/api/v1/audit-cycles/assignments/${activeAssignment.id}/finding`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          finding: verifyForm.finding,
-          notes: verifyForm.notes
-        })
+      await updateAuditAssignment(activeAssignment.id, {
+        finding: verifyForm.finding,
+        notes: verifyForm.notes
       });
-
-      const apiRes = await res.json();
-      if (!res.ok) throw new Error(apiRes.message || 'Failed to submit finding');
 
       alert('Verification finding recorded!');
       setShowVerifyModal(false);
@@ -224,7 +167,7 @@ export function AuditScreen({ onNavigate, user, onAction }) {
       setVerifyForm({ finding: 'VERIFIED', notes: '' });
       fetchCycleDetails();
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(`Error: ${err.response?.data?.message || err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -235,21 +178,11 @@ export function AuditScreen({ onNavigate, user, onAction }) {
     if (!window.confirm('Are you sure you want to close this audit cycle? This will lock findings.')) return;
 
     try {
-      const res = await fetch(`/api/v1/audit-cycles/${selectedCycleId}/close`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const apiRes = await res.json();
-      if (!res.ok) throw new Error(apiRes.message || 'Failed to close cycle');
-      
+      await closeAuditCycle(selectedCycleId);
       alert('Audit cycle closed!');
       fetchCycles(selectedCycleId);
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      alert(`Error: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -440,12 +373,9 @@ export function AuditScreen({ onNavigate, user, onAction }) {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-[18px] border border-slate-200 shadow-2xl p-6 flex flex-col text-slate-800">
-            {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-5">
               <h3 className="text-lg font-bold text-slate-900">Open New Audit Cycle</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 material-symbols-outlined cursor-pointer">
-                close
-              </button>
+              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 material-symbols-outlined cursor-pointer">close</button>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
@@ -513,12 +443,9 @@ export function AuditScreen({ onNavigate, user, onAction }) {
       {showAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-[18px] border border-slate-200 shadow-2xl p-6 flex flex-col text-slate-800">
-            {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-5">
               <h3 className="text-lg font-bold text-slate-900">Assign Asset to checklist</h3>
-              <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-600 material-symbols-outlined cursor-pointer">
-                close
-              </button>
+              <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-600 material-symbols-outlined cursor-pointer">close</button>
             </div>
 
             <form onSubmit={handleAssignSubmit} className="space-y-4">
@@ -573,18 +500,12 @@ export function AuditScreen({ onNavigate, user, onAction }) {
       {showVerifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-[18px] border border-slate-200 shadow-2xl p-6 flex flex-col text-slate-800">
-            {/* Header */}
             <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-5">
               <h3 className="text-lg font-bold text-slate-900">Record Verification Finding</h3>
               <button 
-                onClick={() => {
-                  setShowVerifyModal(false);
-                  setActiveAssignment(null);
-                }} 
+                onClick={() => { setShowVerifyModal(false); setActiveAssignment(null); }} 
                 className="text-slate-400 hover:text-slate-600 material-symbols-outlined cursor-pointer"
-              >
-                close
-              </button>
+              >close</button>
             </div>
 
             {activeAssignment && (
@@ -610,7 +531,7 @@ export function AuditScreen({ onNavigate, user, onAction }) {
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">Verification Notes / Details</label>
                 <textarea
-                  placeholder="e.g. Asset found in room 4B instead of expected 4A..." rows="2.5"
+                  placeholder="e.g. Asset found in room 4B instead of expected 4A..." rows="3"
                   className="w-full bg-white border border-slate-300 focus:border-slate-500 rounded-lg py-2 px-3 text-sm outline-none resize-none"
                   value={verifyForm.notes}
                   onChange={(e) => setVerifyForm({ ...verifyForm, notes: e.target.value })}
@@ -620,10 +541,7 @@ export function AuditScreen({ onNavigate, user, onAction }) {
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-6">
                 <button
                   type="button" 
-                  onClick={() => {
-                    setShowVerifyModal(false);
-                    setActiveAssignment(null);
-                  }}
+                  onClick={() => { setShowVerifyModal(false); setActiveAssignment(null); }}
                   className="px-4.5 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel

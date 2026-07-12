@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getDashboardSummary, getActivityLogs } from '../services/api';
 
 export function DashboardScreen({ onNavigate, user, onAction }) {
   const [summary, setSummary] = useState(null);
@@ -11,31 +12,18 @@ export function DashboardScreen({ onNavigate, user, onAction }) {
       try {
         setLoading(true);
         // Fetch dashboard summary
-        const summaryRes = await fetch('/api/v1/dashboard/summary', {
-          headers: {
-            'Authorization': `Bearer ${user?.token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (!summaryRes.ok) {
-          throw new Error('Failed to fetch dashboard summary');
-        }
-        const summaryData = await summaryRes.json();
-        setSummary(summaryData.data);
+        const summaryRes = await getDashboardSummary();
+        setSummary(summaryRes.data.data);
 
         // Fetch recent activity logs
-        const logsRes = await fetch('/api/v1/activity-logs?size=5', {
-          headers: {
-            'Authorization': `Bearer ${user?.token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (logsRes.ok) {
-          const logsData = await logsRes.json();
-          setActivities(logsData.data.content || []);
+        try {
+          const logsRes = await getActivityLogs({ size: 5 });
+          setActivities(logsRes.data.data?.content || []);
+        } catch (logErr) {
+          // non-critical
         }
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message || 'Failed to fetch dashboard');
       } finally {
         setLoading(false);
       }
@@ -116,10 +104,10 @@ export function DashboardScreen({ onNavigate, user, onAction }) {
           <span>Book resource</span>
         </button>
         <button 
-          onClick={() => { if(typeof onNavigate === 'function') onNavigate('allocation'); }}
+          onClick={() => { if(typeof onNavigate === 'function') onNavigate('maintenance'); }}
           className="bg-white hover:bg-slate-50 text-slate-700 font-medium px-6 py-2.5 rounded-lg text-sm transition-colors border border-slate-300 shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
-          <span>Raise requests</span>
+          <span>Raise Maintenance Request</span>
         </button>
       </div>
 

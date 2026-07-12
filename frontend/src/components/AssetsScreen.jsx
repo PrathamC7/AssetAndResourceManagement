@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAssets, getCategories as fetchCategoriesApi, registerAsset } from '../services/api';
 
 export function AssetsScreen({ onNavigate, user, onAction }) {
   const [assets, setAssets] = useState([]);
@@ -29,36 +30,18 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
     customFields: '{}'
   });
 
-  // Fetch Assets and Categories
-  const fetchAssets = async () => {
-    try {
-      setLoading(true);
-      let url = `/api/v1/assets?page=${page}&size=10`;
-      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
-      if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-      if (selectedState) url += `&state=${selectedState}`;
+  // History Modal State
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!res.ok) throw new Error('Failed to fetch assets');
-      
-      const apiRes = await res.json();
-      setAssets(apiRes.data.content || []);
-      setTotalPages(apiRes.data.totalPages || 0);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
+  const handleViewHistory = async (asset) => {
+    setSelectedAsset(asset);
+    setShowHistoryModal(true);
     try {
-      const res = await fetch('/api/v1/categories', {
+      setLoadingHistory(true);
+      const res = await fetch(`/api/v1/assets/${asset.id}/history`, {
         headers: {
           'Authorization': `Bearer ${user?.token}`,
           'Content-Type': 'application/json'
@@ -66,8 +49,38 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
       });
       if (res.ok) {
         const apiRes = await res.json();
-        setCategories(apiRes.data || []);
+        setHistoryLogs(apiRes.data.content || []);
       }
+    } catch (err) {
+      console.error('Error fetching asset history:', err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Fetch Assets and Categories
+  const fetchAssets = async () => {
+    try {
+      setLoading(true);
+      const params = { page, size: 10 };
+      if (searchTerm) params.search = searchTerm;
+      if (selectedCategory) params.categoryId = selectedCategory;
+      if (selectedState) params.state = selectedState;
+
+      const res = await getAssets(params);
+      setAssets(res.data.data?.content || []);
+      setTotalPages(res.data.data?.totalPages || 0);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetchCategoriesApi();
+      setCategories(res.data.data || []);
     } catch (err) {
       console.error('Error loading categories:', err);
     }
@@ -113,19 +126,7 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
         cost: formData.cost ? parseFloat(formData.cost) : null
       };
 
-      const res = await fetch('/api/v1/assets', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user?.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const apiRes = await res.json();
-      if (!res.ok) {
-        throw new Error(apiRes.message || 'Registration failed');
-      }
+      await registerAsset(payload);
 
       alert('Asset registered successfully!');
       setShowModal(false);
@@ -145,7 +146,7 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
       setPage(0);
       fetchAssets();
     } catch (err) {
-      alert(`Registration error: ${err.message}`);
+      alert(`Registration error: ${err.response?.data?.message || err.message}`);
     } finally {
       setRegistering(false);
     }
@@ -278,7 +279,11 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
               </thead>
               <tbody className="divide-y divide-slate-150 text-sm">
                 {assets.map((asset) => (
-                  <tr key={asset.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr 
+                    key={asset.id} 
+                    onClick={() => handleViewHistory(asset)}
+                    className="hover:bg-slate-100/55 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 font-bold text-slate-900">{asset.assetTag}</td>
                     <td className="px-6 py-4 text-slate-700 font-semibold">{asset.name}</td>
                     <td className="px-6 py-4 text-slate-600 font-medium">{asset.categoryName}</td>
@@ -473,6 +478,75 @@ export function AssetsScreen({ onNavigate, user, onAction }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Asset History Modal */}
+      {showHistoryModal && selectedAsset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-xl rounded-[18px] border border-slate-200 shadow-2xl p-6 flex flex-col text-slate-800 max-h-[85vh] overflow-hidden animate-fade-in">
+            {/* Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-slate-200 mb-5 shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Asset Lifecycle History</h3>
+                <p className="text-xs text-slate-500 font-semibold mt-0.5">{selectedAsset.name} ({selectedAsset.assetTag})</p>
+              </div>
+              <button 
+                onClick={() => { setShowHistoryModal(false); setSelectedAsset(null); setHistoryLogs([]); }}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer material-symbols-outlined"
+              >
+                close
+              </button>
+            </div>
+
+            {/* Logs Timeline */}
+            <div className="flex-grow overflow-y-auto space-y-4 pr-1">
+              {loadingHistory ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-2">
+                  <div className="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-slate-500 font-semibold text-xs">Loading history logs...</p>
+                </div>
+              ) : historyLogs.length > 0 ? (
+                <div className="relative border-l border-slate-200 ml-3 pl-5 space-y-5 pb-2">
+                  {historyLogs.map((log) => (
+                    <div key={log.id} className="relative">
+                      {/* Timeline Dot */}
+                      <span className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full bg-slate-900 border-2 border-white shadow-sm"></span>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-950 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded uppercase tracking-wider text-[10px]">
+                            {log.eventType}
+                          </span>
+                          <span className="text-slate-450 font-semibold">{new Date(log.createdAt).toLocaleString()}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-slate-800 leading-relaxed">{log.description}</p>
+                        {log.previousState && log.newState && (
+                          <p className="text-xs text-slate-500 font-medium">
+                            State transition: <span className="font-bold text-slate-650">{log.previousState}</span> &rarr; <span className="font-bold text-slate-900">{log.newState}</span>
+                          </p>
+                        )}
+                        <p className="text-[10px] text-slate-400 font-bold">Performed by: {log.performedByName}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-slate-450 italic text-center py-12 text-sm font-semibold">
+                  No lifecycle event history logs recorded for this asset.
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end pt-4 border-t border-slate-250 mt-5 shrink-0">
+              <button
+                onClick={() => { setShowHistoryModal(false); setSelectedAsset(null); setHistoryLogs([]); }}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                Close View
+              </button>
+            </div>
           </div>
         </div>
       )}

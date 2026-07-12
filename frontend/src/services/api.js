@@ -105,6 +105,10 @@ export function getAssetById(id) {
   return api.get(`/assets/${id}`);
 }
 
+export function getAssetHistory(id, params = {}) {
+  return api.get(`/assets/${id}/history`, { params });
+}
+
 export function registerAsset(data) {
   return api.post('/assets', data);
 }
