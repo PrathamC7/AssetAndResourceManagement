@@ -16,16 +16,9 @@ export function LoginScreen({ onNavigate, user, onAction }) {
       {/* Login Card */}
       <div className="bg-white border border-slate-200 p-8 rounded-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.04)] flex flex-col text-slate-800">
         
-        {/* Title */}
-        <h1 className="text-center font-bold text-2xl text-slate-950 mb-6 pb-2 border-b border-slate-100">
-          AssetFlow – login
-        </h1>
-
-        {/* Logo Icon Badge */}
-        <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 rounded-full border border-slate-300 flex items-center justify-center text-slate-700 text-lg font-bold">
-            AF
-          </div>
+        {/* Logo Branding */}
+        <div className="flex justify-center mb-6">
+          <img src="/logo_full.png" alt="AssetFlow Logo" className="h-28 w-auto object-contain" />
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>

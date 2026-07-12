@@ -83,8 +83,8 @@ function App() {
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white text-slate-700 flex flex-col p-6 transition-transform duration-300 transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} border-r border-slate-200`}>
           
           {/* Branding */}
-          <div className="mb-6 px-1 flex justify-start">
-            <img src="/logo.png?v=3" alt="AssetFlow Logo" className="h-16 w-auto object-contain" />
+          <div className="mb-4 px-1 flex justify-start">
+            <img src="/logo_horizontal.png" alt="AssetFlow Logo" className="h-9 w-auto object-contain" />
           </div>
 
           {/* Links */}
