@@ -12,7 +12,7 @@ export function LoginScreen({ onNavigate, user, onAction }) {
   };
 
   return (
-    <div className="w-full max-w-[440px] mx-auto p-6">
+    <div className="w-full max-w-[480px] mx-auto p-6">
       {/* Login Card */}
       <div className="bg-white border border-slate-200 p-8 rounded-[18px] shadow-[0_12px_30px_rgba(0,0,0,0.04)] flex flex-col text-slate-800">
         
