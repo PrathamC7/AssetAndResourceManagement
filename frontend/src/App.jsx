@@ -163,8 +163,8 @@ function App() {
           </header>
 
           {/* Dynamic Inner Page Screen using Outlet */}
-          <main className="flex-grow overflow-y-auto p-8 relative flex justify-center">
-            <div className="max-w-6xl w-full mx-auto">
+          <main className="flex-grow overflow-y-auto p-8 pb-16 relative flex justify-center">
+            <div className="max-w-6xl w-full mx-auto pb-16">
               <Outlet />
             </div>
           </main>
